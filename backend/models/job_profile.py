@@ -19,11 +19,7 @@ class JobProfile(BaseModel):
     salary: str | None = None
 
     application_url: str | None = None
-
     required_skills: List[str] = Field(default_factory=list)
-
     preferred_skills: List[str] = Field(default_factory=list)
-
     responsibilities: List[str] = Field(default_factory=list)
-
     benefits: List[str] = Field(default_factory=list)

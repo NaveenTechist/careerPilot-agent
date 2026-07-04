@@ -14,6 +14,7 @@ from services.job_parser_service import (
 )
 
 from models.job_profile import JobProfile
+from repositories.job_repository import JobRepository
 
 from core.logger import app_logger
 from pathlib import Path
@@ -24,10 +25,11 @@ class JobAgent:
         self,
         scraper: JobScraperService,
         parser: JobParserService,
+        job_repository: JobRepository
     ):
         self.scraper = scraper
-
         self.parser = parser
+        self.job_repository = job_repository
 
     def process(
         self,

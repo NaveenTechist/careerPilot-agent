@@ -17,13 +17,23 @@ from models.resume import ResumeResponse
 from core.logger import app_logger
 from core.exceptions import InvalidResumeError
 from services.resume_parser_service import ResumeParserService
+from repositories.resume_repository import ResumeRepository
+from repositories.job_repository import JobRepository
 
 
 class ResumeAgent:
-    def __init__(self, pdf_service=PDFService, parser_service=ResumeParserService):
+    def __init__(
+        self,
+        pdf_service: PDFService,
+        parser_service: ResumeParserService,
+        resume_repository: ResumeRepository,
+        job_repository: JobRepository,
+    ):
 
         self.pdf_service = pdf_service
         self.parser_service = parser_service
+        self.resume_repository = resume_repository
+        self.job_repository = job_repository
 
     def process_resume(self, pdf_path: Path) -> ResumeResponse:
 
@@ -35,6 +45,7 @@ class ResumeAgent:
         text, pages = self.pdf_service.extract_text(pdf_path)
 
         profile = self.parser_service.parse(text)
+        self.resume_repository.save(profile)
 
         app_logger.success("Resume processed successfully. 🔥🔥🔥")
 

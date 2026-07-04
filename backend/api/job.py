@@ -22,6 +22,8 @@ from agents.job_agent import JobAgent
 from services.job_scraper_service import JobScraperService
 from services.job_parser_service import JobParserService
 from core.logger import app_logger
+from services.session_service import session
+from repositories.job_repository import JobRepository
 
 
 router = APIRouter(
@@ -37,9 +39,11 @@ class JobRequest(BaseModel):
 def get_job_agent() -> JobAgent:
     scraper = JobScraperService()
     parser = JobParserService()
+    job_repository = JobRepository
     return JobAgent(
         scraper=scraper,
         parser=parser,
+        job_repository=job_repository,
     )
 
 
@@ -58,7 +62,12 @@ def analyze_job(
 
     try:
         profile = job_agent.process(str(request.url))
+        job_repository.save(profile)
+        logger.success(
+            "Job saved to session."
+        )
         return profile
+
     except Exception:
         logger.exception("Job analysis failed.")
         raise

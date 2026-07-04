@@ -27,6 +27,7 @@ class ResumeNormalizer:
         data = deepcopy(data)
         cls._normalize_education(data)
         cls._normalize_experience(data)
+        cls._normalize_root(data)
         cls._normalize_projects(data)
         cls._normalize_certifications(data)
         return data
@@ -116,3 +117,39 @@ class ResumeNormalizer:
                     or ""
                 )
         data["certifications"] = normalized
+
+    @staticmethod
+    def _normalize_root(data: dict):
+
+            # ---------- Strings ----------
+
+            STRING_FIELDS = {
+                "name",
+                "email",
+                "phone",
+                "location",
+                "summary",
+                "linkedin",
+                "github",
+                "portfolio",
+            }
+            for field in STRING_FIELDS:
+                if data.get(field) is None:
+                    data[field] = ""
+            # ---------- Lists ----------
+            LIST_FIELDS = {
+                "skills",
+                "languages",
+                "education",
+                "experience",
+                "projects",
+                "certifications",
+            }
+            for field in LIST_FIELDS:
+                value = data.get(field)
+                if value is None:
+                    data[field] = []
+                elif isinstance(value, str):
+                    data[field] = [value]
+                elif not isinstance(value, list):
+                    data[field] = []    

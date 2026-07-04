@@ -17,7 +17,8 @@ import time
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from starlette import status
-
+from repositories.resume_repository import ResumeRepository
+from repositories.job_repository import JobRepository
 from agents.resume_agent import ResumeAgent
 from services.pdf_service import PDFService
 from core.config import settings
@@ -25,6 +26,7 @@ from core.logger import app_logger
 from services.resume_parser_service import (
     ResumeParserService,
 )
+from services.session_service import session
 
 router = APIRouter(
     prefix="/resume",
@@ -33,11 +35,16 @@ router = APIRouter(
 
 
 def get_resume_agent():
-    pdf = PDFService()
-    parser = ResumeParserService()
+    pdf_service = PDFService()
+    parser_service = ResumeParserService()
+    repository = ResumeRepository()
+    job_repository = JobRepository()
     return ResumeAgent(
-        pdf,
-        parser,
+        pdf_service=pdf_service,
+        parser_service=parser_service,
+        resume_repository=repository,
+        job_repository=job_repository
+
     )
 
 
@@ -90,8 +97,13 @@ async def upload_resume(
         with temp_path.open("wb") as buffer:
             buffer.write(content)
 
-        result = resume_agent.process_resume(temp_path)
+        result = resume_agent.process_resume(
+            temp_path
+        )
 
+        logger.success(
+            "Resume saved to session."
+        )
         return result
 
     except Exception:

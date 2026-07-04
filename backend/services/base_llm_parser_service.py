@@ -36,8 +36,13 @@ class BaseLLMParserService(ABC):
         self.client = GeminiClient()
 
     def parse(self, text: str):
+        print("=" * 60)
+        print("CLASS =", type(self).__name__)
+        print("PROMPT_FILE =", repr(self.PROMPT_FILE))
+        print("=" * 60)
         app_logger.info(f"Loading prompt: {self.PROMPT_FILE}")
         prompt = PromptLoader.load(self.PROMPT_FILE)
+        
         prompt = prompt.replace(
             "{{content}}",
             text,
