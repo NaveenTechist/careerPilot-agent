@@ -1,0 +1,13 @@
+POST http://localhost:8000/resume/upload
+
+####
+
+
+
+# POST /resume
+
+# POST /job
+
+# POST /match
+
+# POST /apply
