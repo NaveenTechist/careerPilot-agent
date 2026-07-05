@@ -22,40 +22,31 @@ class MatchingAgent:
         self,
         parser: MatchingParserService,
     ):
-
         self.parser = parser
-
     def process(
         self,
     ) -> MatchResult:
-
         app_logger.info(
             "Matching process started."
         )
-
         if session.session.resume is None:
             raise MatchingError(
                 "Resume not uploaded."
             )
-
         if session.session.job is None:
             raise MatchingError(
                 "Job not analyzed."
             )
-
         prompt = f"""
         Resume Profile
         {session.session.resume.model_dump_json(indent=2)}
         Job Profile
         {session.session.job.model_dump_json(indent=2)}
         """
-
         result = self.parser.parse(
             prompt
         )
-
         app_logger.success(
             "Matching completed."
         )
-
         return result

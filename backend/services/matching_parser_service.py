@@ -1,12 +1,14 @@
+"""
+Matching Parser Service.
+
+Converts LLM response into
+MatchResult.
+"""
+
 from models.match_result import MatchResult
+from services.base_llm_parser_service import (BaseLLMParserService,)
+from services.matching_normalizer import (MatchingNormalizer,)
 
-from services.base_llm_parser_service import (
-    BaseLLMParserService,
-)
-
-from services.matching_normalizer import (
-    MatchingNormalizer,
-)
 
 class MatchingParserService(
     BaseLLMParserService,
@@ -14,4 +16,4 @@ class MatchingParserService(
 
     PROMPT_FILE = "matching.md"
     MODEL = MatchResult
-    NORMALIZER = MatchingNormalizer()
+    NORMALIZER = MatchingNormalizer

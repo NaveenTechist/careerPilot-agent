@@ -1,13 +1,20 @@
 """
 Matching API.
+Responsible only for HTTP.
+Never
+- Match skills
+- Call Gemini
+- Save database directly
 """
 
 import time
 import uuid
-
-from fastapi import APIRouter, Depends
-
+from fastapi import APIRouter
+from fastapi import Depends
 from agents.matching_agent import MatchingAgent
+from repositories.resume_repository import ResumeRepository
+from repositories.job_repository import JobRepository
+from repositories.match_repository import MatchRepository
 from services.matching_parser_service import (
     MatchingParserService,
 )
@@ -19,60 +26,49 @@ router = APIRouter(
     tags=["Matching"],
 )
 
+# ------------------------------------------------------
+
 
 def get_matching_agent():
-
-    parser = MatchingParserService()
-
     return MatchingAgent(
-        parser,
+        resume_repository=ResumeRepository(),
+        job_repository=JobRepository(),
+        match_repository=MatchRepository(),
+        parser=MatchingParserService(),
     )
 
+# ------------------------------------------------------
 
 @router.post("/")
-def match_resume(
-    matching_agent: MatchingAgent = Depends(
+def analyze(
+    agent: MatchingAgent = Depends(
         get_matching_agent
     ),
 ):
-
     request_id = str(uuid.uuid4())
-
     logger = app_logger.bind(
-        request_id=request_id
+        request_id=request_id,
     )
-
     start = time.perf_counter()
-
     logger.info(
         "Matching request received."
     )
-
     try:
-
-        result = matching_agent.process()
-
+        result = agent.process()
         logger.success(
             "Matching completed."
         )
-
         return result
-
     except Exception:
-
         logger.exception(
             "Matching failed."
         )
-
         raise
-
     finally:
-
         elapsed = (
             time.perf_counter()
             - start
         ) * 1000
-
         logger.info(
             f"Completed in {elapsed:.2f} ms"
         )
