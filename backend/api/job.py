@@ -26,6 +26,7 @@ from services.session_service import session
 from repositories.job_repository import JobRepository
 
 
+
 router = APIRouter(
     prefix="/job",
     tags=["Job"],
@@ -39,11 +40,11 @@ class JobRequest(BaseModel):
 def get_job_agent() -> JobAgent:
     scraper = JobScraperService()
     parser = JobParserService()
-    job_repository = JobRepository
+    repository = JobRepository()
     return JobAgent(
         scraper=scraper,
         parser=parser,
-        job_repository=job_repository,
+        repository=repository,
     )
 
 
@@ -62,7 +63,7 @@ def analyze_job(
 
     try:
         profile = job_agent.process(str(request.url))
-        job_repository.save(profile)
+        # job_repository.save(profile)
         logger.success(
             "Job saved to session."
         )

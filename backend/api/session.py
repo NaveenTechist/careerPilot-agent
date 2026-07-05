@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
-from services.session_service import session
+from repositories.resume_repository import ResumeRepository
+from repositories.job_repository import JobRepository
 
 router = APIRouter(
     prefix="/session",
@@ -11,31 +12,57 @@ router = APIRouter(
 @router.get("/")
 def current_session():
 
-    s = session.session
+    resume = ResumeRepository().get_latest()
+
+    job = JobRepository().get_latest()
+
+    if resume and job:
+        status = "READY_FOR_MATCHING"
+
+    elif resume:
+        status = "WAITING_FOR_JOB"
+
+    else:
+        status = "WAITING_FOR_RESUME"
 
     return {
 
-        "status": s.status,
+        "status": status,
 
         "resume": {
 
-            "uploaded": s.resume is not None,
+            "uploaded": resume is not None,
 
             "profile": (
 
                 {
 
-                    "name": s.resume.name,
+                    "name": resume.name,
 
-                    "skills": len(s.resume.skills),
+                    "skills": len(
+                        resume.resume_json.get(
+                            "skills",
+                            [],
+                        )
+                    ),
 
-                    "projects": len(s.resume.projects),
+                    "projects": len(
+                        resume.resume_json.get(
+                            "projects",
+                            [],
+                        )
+                    ),
 
-                    "experience": len(s.resume.experience),
+                    "experience": len(
+                        resume.resume_json.get(
+                            "experience",
+                            [],
+                        )
+                    ),
 
                 }
 
-                if s.resume
+                if resume
 
                 else None
 
@@ -45,32 +72,33 @@ def current_session():
 
         "job": {
 
-            "uploaded": s.job is not None,
+            "uploaded": job is not None,
 
             "profile": (
 
                 {
 
-                    "company": s.job.company,
+                    "company": job.company,
 
-                    "title": s.job.job_title,
+                    "title": job.job_title,
 
                     "required_skills": len(
-                        s.job.required_skills
+                        job.job_json.get(
+                            "required_skills",
+                            [],
+                        )
                     ),
 
                 }
 
-                if s.job
+                if job
 
                 else None
 
             ),
 
         },
-        "next_action": (
 
-            s.status.value
-
-        ),
+        "next_action": status,
     }
+

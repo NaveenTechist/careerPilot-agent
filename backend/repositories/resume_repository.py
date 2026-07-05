@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database.database import SessionLocal
+from models.db.resume_entity import ResumeEntity
 
 from models.resume_profile import ResumeProfile
 from models.db.resume_entity import ResumeEntity
@@ -71,46 +72,17 @@ class ResumeRepository:
 
     # -----------------------------------------------------
 
-    def get_latest(
-        self,
-    ) -> ResumeProfile | None:
-
-        app_logger.info(
-            "Fetching latest resume."
-        )
-
-        db: Session = SessionLocal()
-
+    def get_latest(self):
+        db = SessionLocal()
         try:
-
-            entity = db.scalar(
-
-                select(
-                    ResumeEntity
-                ).order_by(
+            return (
+                db.query(ResumeEntity)
+                .order_by(
                     ResumeEntity.created_at.desc()
                 )
-
+                .first()
             )
-
-            if entity is None:
-
-                app_logger.warning(
-                    "No resume found."
-                )
-
-                return None
-
-            app_logger.success(
-                "Resume retrieved."
-            )
-
-            return ResumeProfile.model_validate(
-                entity.resume_json
-            )
-
         finally:
-
             db.close()
 
     # -----------------------------------------------------
