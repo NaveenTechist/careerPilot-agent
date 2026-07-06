@@ -36,24 +36,42 @@ class BaseLLMParserService(ABC):
         self.client = GeminiClient()
 
     def parse(self, text: str):
-        print("=" * 60)
-        print("CLASS =", type(self).__name__)
-        print("PROMPT_FILE =", repr(self.PROMPT_FILE))
-        print("=" * 60)
+        # print("=" * 60)
+        # print("CLASS =", type(self).__name__)
+        # print("PROMPT_FILE =", repr(self.PROMPT_FILE))
+        # print("=" * 60)
         app_logger.info(f"Loading prompt: {self.PROMPT_FILE}")
         prompt = PromptLoader.load(self.PROMPT_FILE)
-        
+        # print("=" * 80)
+        # print("LOADED PROMPT")
+        # print(prompt)
+        # print("=" * 80)
         prompt = prompt.replace(
             "{{content}}",
             text,
         )
         response = self.client.generate(prompt)
+        # print("=" * 80)
+        # print("RAW GEMINI")
+        # print(response)
+        # print("=" * 80)
         cleaned = self._clean_json(response)
+        # print("=" * 80)
+        # print("CLEANED JSON")
+        # print(cleaned)
+        # print("=" * 80)
         try:
             data = json.loads(cleaned)
             normalized = self.NORMALIZER.normalize(data)
+            # print("=")
+            # print("NORMALIZED")
+            # print(json.dumps(normalized, indent=2))
+            # print("=")
             model = self.MODEL.model_validate(normalized)
             app_logger.success(f"{self.MODEL.__name__} parsed successfully.")
+            # print("=" * 80)
+            # print("After Parse Response", model)
+            # print("=" * 80)
 
             return model
 

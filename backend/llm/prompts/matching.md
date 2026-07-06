@@ -45,6 +45,10 @@ If experience matches,
 increase the score.
 Education should have lower weight than
 skills and projects.
+--------------------------------------------------
+
+Resume and Job Information
+{{content}}
 
 --------------------------------------------------
 
@@ -60,6 +64,8 @@ Return ONLY valid JSON.
     "next_steps": [],
     "should_apply": false
 }
+
+
 Never return markdown.
 Never return explanation.
 Never wrap JSON inside code blocks.

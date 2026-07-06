@@ -57,7 +57,6 @@ class GeminiClient:
     ) -> str:
         """
         Send a prompt to Gemini.
-
         Returns
         -------
         str
@@ -71,6 +70,9 @@ class GeminiClient:
                 contents=prompt,
             )
             app_logger.success("Gemini response received.")
+            print("="* 60)
+            print("Response From Gemini",response.text)
+            print("="* 60)
 
             if not response.text:
                 raise LLMServiceError("Gemini returned an empty response.")
