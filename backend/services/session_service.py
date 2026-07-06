@@ -16,7 +16,6 @@ from core.logger import app_logger
 
 
 class SessionService:
-
     def __init__(self):
 
         self.session = UserSession()
@@ -32,13 +31,9 @@ class SessionService:
 
         self.session.resume = profile
 
-        self.session.status = (
-            SessionStatus.WAITING_FOR_JOB
-        )
+        self.session.status = SessionStatus.WAITING_FOR_JOB
 
-        app_logger.success(
-            "Resume stored in session."
-        )
+        app_logger.success("Resume stored in session.")
 
     # --------------------
     # Job
@@ -51,20 +46,15 @@ class SessionService:
 
         self.session.job = profile
 
-        self.session.status = (
-            SessionStatus.READY_FOR_MATCHING
-        )
+        self.session.status = SessionStatus.READY_FOR_MATCHING
 
-        app_logger.success(
-            "Job stored in session."
-        )
+        app_logger.success("Job stored in session.")
 
     # --------------------
 
     def clear(self):
         self.session = UserSession()
-        app_logger.info(
-            "Session cleared."
-        )
+        app_logger.info("Session cleared.")
+
 
 session = SessionService()

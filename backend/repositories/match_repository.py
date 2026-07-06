@@ -21,7 +21,6 @@ from core.logger import app_logger
 
 
 class MatchRepository:
-
     # ---------------------------------------------
 
     def save(
@@ -30,9 +29,7 @@ class MatchRepository:
         job_id: UUID,
         result: MatchResult,
     ) -> MatchEntity:
-        app_logger.info(
-            "Saving match result."
-        )
+        app_logger.info("Saving match result.")
         db: Session = SessionLocal()
         try:
             entity = MatchEntity(
@@ -47,15 +44,11 @@ class MatchRepository:
             db.add(entity)
             db.commit()
             db.refresh(entity)
-            app_logger.success(
-                f"Match saved successfully. id={entity.id}"
-            )
+            app_logger.success(f"Match saved successfully. id={entity.id}")
             return entity
         except Exception:
             db.rollback()
-            app_logger.exception(
-                "Failed to save match."
-            )
+            app_logger.exception("Failed to save match.")
             raise
         finally:
             db.close()
@@ -65,15 +58,10 @@ class MatchRepository:
     def get_latest(self):
         db = SessionLocal()
         try:
-            return (
-                db.query(MatchEntity)
-                .order_by(
-                    MatchEntity.created_at.desc()
-                )
-                .first()
-            )
+            return db.query(MatchEntity).order_by(MatchEntity.created_at.desc()).first()
         finally:
             db.close()
+
     # ---------------------------------------------
     def get_by_id(
         self,
@@ -81,15 +69,7 @@ class MatchRepository:
     ):
         db = SessionLocal()
         try:
-            return (
-                db.query(
-                    MatchEntity
-                )
-                .filter(
-                    MatchEntity.id == match_id
-                )
-                .first()
-            )
+            return db.query(MatchEntity).filter(MatchEntity.id == match_id).first()
         finally:
             db.close()
 
@@ -102,43 +82,27 @@ class MatchRepository:
     ):
         db = SessionLocal()
         try:
-            entity = (
-                db.query(
-                    MatchEntity
-                )
-                .filter(
-                    MatchEntity.id == match_id
-                )
-                .first()
-            )
+            entity = db.query(MatchEntity).filter(MatchEntity.id == match_id).first()
             if entity is None:
                 return None
             entity.status = status
             db.commit()
             db.refresh(entity)
-            app_logger.success(
-                f"Match status updated to {status}"
-            )
+            app_logger.success(f"Match status updated to {status}")
             return entity
         except Exception:
             db.rollback()
-            app_logger.exception(
-                "Unable to update match status."
-            )
+            app_logger.exception("Unable to update match status.")
             raise
         finally:
             db.close()
+
     # ---------------------------------------------
     def delete_all(self):
         db = SessionLocal()
         try:
-            db.query(
-                MatchEntity
-            ).delete()
+            db.query(MatchEntity).delete()
             db.commit()
-            app_logger.success(
-                "All matches deleted."
-            )
+            app_logger.success("All matches deleted.")
         finally:
-
             db.close()

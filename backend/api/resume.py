@@ -43,8 +43,7 @@ def get_resume_agent():
         pdf_service=pdf_service,
         parser_service=parser_service,
         resume_repository=repository,
-        job_repository=job_repository
-
+        job_repository=job_repository,
     )
 
 
@@ -97,13 +96,9 @@ async def upload_resume(
         with temp_path.open("wb") as buffer:
             buffer.write(content)
 
-        result = resume_agent.process_resume(
-            temp_path
-        )
+        result = resume_agent.process_resume(temp_path)
 
-        logger.success(
-            "Resume saved to session."
-        )
+        logger.success("Resume saved to session.")
         return result
 
     except Exception:

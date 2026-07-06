@@ -24,20 +24,16 @@ from core.logger import app_logger
 
 
 class ResumeRepository:
-
     def save(
         self,
         profile: ResumeProfile,
     ) -> ResumeEntity:
 
-        app_logger.info(
-            "Saving resume profile."
-        )
+        app_logger.info("Saving resume profile.")
 
         db: Session = SessionLocal()
 
         try:
-
             entity = ResumeEntity(
                 name=profile.name,
                 email=profile.email,
@@ -50,24 +46,18 @@ class ResumeRepository:
             db.commit()
             db.refresh(entity)
 
-            app_logger.success(
-                f"Resume saved successfully. id={entity.id}"
-            )
+            app_logger.success(f"Resume saved successfully. id={entity.id}")
 
             return entity
 
         except Exception:
-
             db.rollback()
 
-            app_logger.exception(
-                "Failed to save resume."
-            )
+            app_logger.exception("Failed to save resume.")
 
             raise
 
         finally:
-
             db.close()
 
     # -----------------------------------------------------
@@ -76,11 +66,7 @@ class ResumeRepository:
         db = SessionLocal()
         try:
             return (
-                db.query(ResumeEntity)
-                .order_by(
-                    ResumeEntity.created_at.desc()
-                )
-                .first()
+                db.query(ResumeEntity).order_by(ResumeEntity.created_at.desc()).first()
             )
         finally:
             db.close()
@@ -89,24 +75,16 @@ class ResumeRepository:
 
     def delete_all(self):
 
-        app_logger.info(
-            "Deleting all resumes."
-        )
+        app_logger.info("Deleting all resumes.")
 
         db: Session = SessionLocal()
 
         try:
-
-            db.query(
-                ResumeEntity
-            ).delete()
+            db.query(ResumeEntity).delete()
 
             db.commit()
 
-            app_logger.success(
-                "All resumes deleted."
-            )
+            app_logger.success("All resumes deleted.")
 
         finally:
-
             db.close()

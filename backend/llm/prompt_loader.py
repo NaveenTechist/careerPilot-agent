@@ -9,12 +9,15 @@ Why?
 - Easy prompt tuning.
 - Version control friendly.
 """
+
 from pathlib import Path
 
 
 class PromptLoader:
     """Utility class for loading prompt templates."""
+
     PROMPT_DIR = Path(__file__).parent / "prompts"
+
     @classmethod
     def load(cls, filename: str) -> str:
         """

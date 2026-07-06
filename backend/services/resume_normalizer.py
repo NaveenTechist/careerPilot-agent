@@ -121,35 +121,35 @@ class ResumeNormalizer:
     @staticmethod
     def _normalize_root(data: dict):
 
-            # ---------- Strings ----------
+        # ---------- Strings ----------
 
-            STRING_FIELDS = {
-                "name",
-                "email",
-                "phone",
-                "location",
-                "summary",
-                "linkedin",
-                "github",
-                "portfolio",
-            }
-            for field in STRING_FIELDS:
-                if data.get(field) is None:
-                    data[field] = ""
-            # ---------- Lists ----------
-            LIST_FIELDS = {
-                "skills",
-                "languages",
-                "education",
-                "experience",
-                "projects",
-                "certifications",
-            }
-            for field in LIST_FIELDS:
-                value = data.get(field)
-                if value is None:
-                    data[field] = []
-                elif isinstance(value, str):
-                    data[field] = [value]
-                elif not isinstance(value, list):
-                    data[field] = []    
+        STRING_FIELDS = {
+            "name",
+            "email",
+            "phone",
+            "location",
+            "summary",
+            "linkedin",
+            "github",
+            "portfolio",
+        }
+        for field in STRING_FIELDS:
+            if data.get(field) is None:
+                data[field] = ""
+        # ---------- Lists ----------
+        LIST_FIELDS = {
+            "skills",
+            "languages",
+            "education",
+            "experience",
+            "projects",
+            "certifications",
+        }
+        for field in LIST_FIELDS:
+            value = data.get(field)
+            if value is None:
+                data[field] = []
+            elif isinstance(value, str):
+                data[field] = [value]
+            elif not isinstance(value, list):
+                data[field] = []

@@ -7,6 +7,7 @@ Pydantic validation.
 
 from copy import deepcopy
 
+
 class MatchingNormalizer:
     @classmethod
     def normalize(
@@ -16,6 +17,7 @@ class MatchingNormalizer:
         data = deepcopy(data)
         cls._normalize_root(data)
         return data
+
     @staticmethod
     def _normalize_root(
         data: dict,

@@ -1,14 +1,11 @@
-import ResumeUpload from "@/components/ResumeUpload";
-import JobUrlForm from "@/components/JobUrlForm";
+import CareerPilotDashboard from "@/components/dashboard/CareerPilotDashboard";
 
 export default function Home() {
+
   return (
-    <main className="mx-auto mt-20 max-w-2xl space-y-8">
 
-      <ResumeUpload />
+    <CareerPilotDashboard />
 
-      <JobUrlForm />
-
-    </main>
   );
+
 }

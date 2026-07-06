@@ -6,13 +6,11 @@ from core.logger import app_logger
 from models.db.resume_entity import ResumeEntity
 from models.db.job_entity import JobEntity
 
-app_logger.info(
-    "Initializing database."
-)
+app_logger.info("Initializing database.")
+
 
 def init_database():
     Base.metadata.create_all(bind=engine)
 
-app_logger.success(
-    "Database initialized successfully."
-)
+
+app_logger.success("Database initialized successfully.")

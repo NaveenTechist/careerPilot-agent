@@ -28,7 +28,6 @@ from models.match_result import MatchResult
 
 
 class SessionStatus(str, Enum):
-
     WAITING_FOR_RESUME = "WAITING_FOR_RESUME"
 
     WAITING_FOR_JOB = "WAITING_FOR_JOB"
@@ -43,10 +42,7 @@ class SessionStatus(str, Enum):
 
 
 class UserSession(BaseModel):
-
-    status: SessionStatus = (
-        SessionStatus.WAITING_FOR_RESUME
-    )
+    status: SessionStatus = SessionStatus.WAITING_FOR_RESUME
 
     resume: ResumeProfile | None = None
 

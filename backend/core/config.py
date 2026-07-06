@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE: int = 5 * 1024 * 1024  # 5 MB
     TEMP_DIRECTORY: str = "temp"
     DATABASE_URL: str
-    
+
     MIN_JOB_TEXT_LENGTH: int = 500
     PLAYWRIGHT_TIMEOUT: int = 30000
     HEADLESS_BROWSER: bool = True

@@ -39,7 +39,6 @@ class MatchStatus(str, Enum):
 
 
 class MatchEntity(Base):
-
     __tablename__ = "match_results"
 
     # --------------------------------------------------

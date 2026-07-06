@@ -18,14 +18,13 @@ from core.exceptions import MatchingError
 
 
 class MatchingAgent:
-
     def __init__(
-    self,
-    resume_repository: ResumeRepository,
-    job_repository: JobRepository,
-    match_repository: MatchRepository,
-    parser: MatchingParserService,
-):
+        self,
+        resume_repository: ResumeRepository,
+        job_repository: JobRepository,
+        match_repository: MatchRepository,
+        parser: MatchingParserService,
+    ):
 
         self.resume_repository = resume_repository
         self.job_repository = job_repository
@@ -35,21 +34,15 @@ class MatchingAgent:
     def process(
         self,
     ) -> MatchResult:
-        app_logger.info(
-            "Matching process started."
-        )
+        app_logger.info("Matching process started.")
         resume = self.resume_repository.get_latest()
 
         if resume is None:
-            raise MatchingError(
-                "Resume not found."
-            )
+            raise MatchingError("Resume not found.")
         job = self.job_repository.get_latest()
 
         if job is None:
-            raise MatchingError(    
-                "Job not found."
-            )
+            raise MatchingError("Job not found.")
         prompt = f"""
         Resume Profile
         {json.dumps(resume.resume_json, indent=2)}
@@ -60,17 +53,13 @@ class MatchingAgent:
         # print("PROMPT:")
         # print(prompt)
         # print("="*80)
-        result = self.parser.parse(
-            prompt
-        )
+        result = self.parser.parse(prompt)
 
         self.match_repository.save(
             resume_id=resume.id,
             job_id=job.id,
             result=result,
         )
-        
-        app_logger.success(
-            "Matching completed."
-        )
+
+        app_logger.success("Matching completed.")
         return result

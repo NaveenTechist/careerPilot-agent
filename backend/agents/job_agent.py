@@ -25,14 +25,17 @@ class JobAgent:
         self,
         scraper: JobScraperService,
         parser: JobParserService,
-        repository: JobRepository
+        repository: JobRepository,
     ):
         self.scraper = scraper
         self.parser = parser
         self.repository = repository
 
-    def process(self,url: str,) -> JobProfile:
-        
+    def process(
+        self,
+        url: str,
+    ) -> JobProfile:
+
         app_logger.info("Job processing started.")
         job_text = self.scraper.scrape(url)
 
@@ -46,7 +49,3 @@ class JobAgent:
         app_logger.success("Job processing completed.")
 
         return profile
-    
-  
-        
-    

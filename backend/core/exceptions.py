@@ -36,5 +36,6 @@ class JobParsingError(CareerPilotError):
 class LLMServiceError(CareerPilotError):
     """Raised when the LLM service is unavailable."""
 
+
 class MatchingError(CareerPilotError):
     """Raised when resume matching fails."""

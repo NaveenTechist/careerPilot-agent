@@ -38,12 +38,6 @@ Job
 
 """
 
-result = parser.parse(
-    prompt
-)
+result = parser.parse(prompt)
 
-print(
-    result.model_dump_json(
-        indent=4
-    )
-)
+print(result.model_dump_json(indent=4))

@@ -34,9 +34,7 @@ app.add_middleware(
 app.include_router(resume_router)
 app.include_router(job_router)
 app.include_router(session_router)
-app.include_router(
-    matching_router
-)   
+app.include_router(matching_router)
 
 
 @app.get("/")

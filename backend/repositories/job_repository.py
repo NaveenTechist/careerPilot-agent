@@ -13,8 +13,10 @@ from core.logger import app_logger
 
 
 class JobRepository:
-
-    def save(self,profile: JobProfile,) -> JobEntity:
+    def save(
+        self,
+        profile: JobProfile,
+    ) -> JobEntity:
         app_logger.info("Saving job profile.")
         db: Session = SessionLocal()
         try:
@@ -27,31 +29,21 @@ class JobRepository:
             db.add(entity)
             db.commit()
             db.refresh(entity)
-            app_logger.success(
-                f"Job saved successfully. id={entity.id}"
-            )
+            app_logger.success(f"Job saved successfully. id={entity.id}")
             return entity
         except Exception:
             db.rollback()
-            app_logger.exception(
-                "Failed to save job."
-            )
+            app_logger.exception("Failed to save job.")
             raise
         finally:
             db.close()
-            
+
     # ----------------------------------------------------
 
     def get_latest(self):
         db = SessionLocal()
         try:
-            return (
-                db.query(JobEntity)
-                .order_by(
-                    JobEntity.created_at.desc()
-                )
-                .first()
-            )
+            return db.query(JobEntity).order_by(JobEntity.created_at.desc()).first()
         finally:
             db.close()
 
@@ -59,24 +51,16 @@ class JobRepository:
 
     def delete_all(self):
 
-        app_logger.info(
-            "Deleting all jobs."
-        )
+        app_logger.info("Deleting all jobs.")
 
         db: Session = SessionLocal()
 
         try:
-
-            db.query(
-                JobEntity
-            ).delete()
+            db.query(JobEntity).delete()
 
             db.commit()
 
-            app_logger.success(
-                "All jobs deleted."
-            )
+            app_logger.success("All jobs deleted.")
 
         finally:
-
             db.close()

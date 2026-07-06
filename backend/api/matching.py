@@ -37,38 +37,67 @@ def get_matching_agent():
         parser=MatchingParserService(),
     )
 
+
 # ------------------------------------------------------
+
 
 @router.post("/")
 def analyze(
-    agent: MatchingAgent = Depends(
-        get_matching_agent
-    ),
+    agent: MatchingAgent = Depends(get_matching_agent),
 ):
     request_id = str(uuid.uuid4())
     logger = app_logger.bind(
         request_id=request_id,
     )
     start = time.perf_counter()
-    logger.info(
-        "Matching request received."
-    )
+    logger.info("Matching request received.")
     try:
         result = agent.process()
-        logger.success(
-            "Matching completed."
-        )
+        logger.success("Matching completed.")
         return result
     except Exception:
-        logger.exception(
-            "Matching failed."
-        )
+        logger.exception("Matching failed.")
         raise
     finally:
-        elapsed = (
-            time.perf_counter()
-            - start
-        ) * 1000
-        logger.info(
-            f"Completed in {elapsed:.2f} ms"
-        )
+        elapsed = (time.perf_counter() - start) * 1000
+        logger.info(f"Completed in {elapsed:.2f} ms")
+
+@router.post("/{match_id}/proceed")
+def proceed_match(
+    match_id: UUID,
+):
+
+    repository = MatchRepository()
+
+    match = repository.update_status(
+        match_id,
+        MatchStatus.PROCEEDED,
+    )
+
+    return {
+
+        "message": "Application approved.",
+
+        "status": match.status,
+
+    }
+
+@router.post("/{match_id}/cancel")
+def cancel_match(
+    match_id: UUID,
+):
+
+    repository = MatchRepository()
+
+    match = repository.update_status(
+        match_id,
+        MatchStatus.CANCELLED,
+    )
+
+    return {
+
+        "message": "Application cancelled.",
+
+        "status": match.status,
+
+    }

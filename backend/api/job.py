@@ -26,7 +26,6 @@ from services.session_service import session
 from repositories.job_repository import JobRepository
 
 
-
 router = APIRouter(
     prefix="/job",
     tags=["Job"],
@@ -64,9 +63,7 @@ def analyze_job(
     try:
         profile = job_agent.process(str(request.url))
         # job_repository.save(profile)
-        logger.success(
-            "Job saved to session."
-        )
+        logger.success("Job saved to session.")
         return profile
 
     except Exception:
