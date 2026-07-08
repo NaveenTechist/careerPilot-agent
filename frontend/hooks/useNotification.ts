@@ -1,47 +1,38 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export function useNotification() {
+    const [message, setMessage] = useState("");
+    const [open, setOpen] = useState(false);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    const [
-
-        message,
-
-        setMessage,
-
-    ] = useState("");
-
-    const [
-
-        open,
-
-        setOpen,
-
-    ] = useState(false);
-
-    function notify(
-        text: string
-    ) {
+    function notify(text: string) {
+        // Clear any existing timer
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
 
         setMessage(text);
-
         setOpen(true);
 
-        setTimeout(() => {
-
+        // Auto-dismiss after 4 seconds
+        timerRef.current = setTimeout(() => {
             setOpen(false);
+            timerRef.current = null;
+        }, 4000);
+    }
 
-        }, 3000);
-
+    function dismiss() {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        setOpen(false);
     }
 
     return {
-
         message,
-
         open,
-
         notify,
-
+        dismiss
     };
-
 }

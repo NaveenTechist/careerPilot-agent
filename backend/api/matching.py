@@ -102,3 +102,29 @@ def cancel_match(
         "status": match.status,
 
     }
+@router.get("/current")
+def current_match(
+
+    agent: MatchingAgent = Depends(
+        get_matching_agent
+    ),
+
+):
+
+    result = agent.get_current_match()
+
+    if result is None:
+
+        return {
+
+            "exists": False,
+
+        }
+
+    return {
+
+        "exists": True,
+
+        "match": result,
+
+    }

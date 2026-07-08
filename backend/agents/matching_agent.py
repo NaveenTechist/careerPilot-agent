@@ -37,6 +37,7 @@ class MatchingAgent:
 
     def process(self):
 
+
         app_logger.info(
             "Matching process started."
         )
@@ -124,4 +125,36 @@ class MatchingAgent:
             "match_id": str(entity.id),
             "status": entity.status.value,
             **result.model_dump(),
+        }
+
+    def get_current_match(self):
+        """
+        Get latest match without regenerating.
+        """
+        app_logger.info(
+            "Checking existing match."
+        )
+        resume = self.resume_repository.get_latest()
+
+        if resume is None:
+            return None
+
+        job = self.job_repository.get_latest()
+
+        if job is None:
+            return None
+
+        # OOPS
+        entity = self.match_repository.get_latest_by_resume_job(
+            resume.id,
+            job.id,
+        )
+
+        if entity is None:
+            return None
+
+        return {
+            "match_id": str(entity.id),
+            "status": entity.status.value,
+            **entity.match_json,
         }

@@ -126,3 +126,29 @@ class MatchRepository:
 
         finally:
             db.close()
+    
+    def get_latest_by_resume_job(
+    self,
+    resume_id,
+    job_id,
+    ):
+        """
+        Returns the latest match for the given
+        Resume + Job pair.
+        """
+        db = SessionLocal()
+        try:
+            return (
+                db.query(MatchEntity)
+                .filter(
+                    MatchEntity.resume_id == resume_id,
+                    MatchEntity.job_id == job_id,
+                )
+                .order_by(
+                    MatchEntity.created_at.desc()
+                )
+                .first()    
+            )
+
+        finally:
+            db.close()

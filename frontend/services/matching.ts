@@ -28,3 +28,7 @@ export async function cancelMatch(
         `/match/${id}/cancel`
     );
 }
+
+export async function getCurrentMatch() {
+    return api.get("/match/current");
+}
