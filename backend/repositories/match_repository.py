@@ -39,7 +39,7 @@ class MatchRepository:
                 recommendation=result.recommendation,
                 should_apply=result.should_apply,
                 status=MatchStatus.PENDING,
-                match_json=result.model_dump(),
+                match_json=result.model_dump(mode="json"),
             )
             db.add(entity)
             db.commit()
@@ -104,5 +104,25 @@ class MatchRepository:
             db.query(MatchEntity).delete()
             db.commit()
             app_logger.success("All matches deleted.")
+        finally:
+            db.close()
+
+    def get_by_resume_job(
+    self,
+    resume_id: UUID,
+    job_id: UUID,
+) -> MatchEntity | None:
+        db = SessionLocal()
+
+        try:
+            return (
+                db.query(MatchEntity)
+                .filter(
+                    MatchEntity.resume_id == resume_id,
+                    MatchEntity.job_id == job_id,
+                )
+                .first()
+            )
+
         finally:
             db.close()

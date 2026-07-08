@@ -113,15 +113,10 @@ export default function MatchCard({
             </div>
 
             <ActionButtons
-
-                matchId={result.id}
-
+                matchId={result.match_id}
                 shouldApply={result.should_apply}
-
                 onProceed={onProceed}
-
                 onCancel={onCancel}
-
             />
 
         </div>

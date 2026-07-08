@@ -9,9 +9,12 @@ Never
 
 import time
 import uuid
+from uuid import UUID
+
 from fastapi import APIRouter
 from fastapi import Depends
 from agents.matching_agent import MatchingAgent
+from models.db.match_entity import MatchStatus
 from repositories.resume_repository import ResumeRepository
 from repositories.job_repository import JobRepository
 from repositories.match_repository import MatchRepository
@@ -54,6 +57,7 @@ def analyze(
     try:
         result = agent.process()
         logger.success("Matching completed.")
+        print(result)
         return result
     except Exception:
         logger.exception("Matching failed.")
@@ -68,7 +72,6 @@ def proceed_match(
 ):
 
     repository = MatchRepository()
-
     match = repository.update_status(
         match_id,
         MatchStatus.PROCEEDED,
@@ -88,7 +91,6 @@ def cancel_match(
 ):
 
     repository = MatchRepository()
-
     match = repository.update_status(
         match_id,
         MatchStatus.CANCELLED,
@@ -97,7 +99,6 @@ def cancel_match(
     return {
 
         "message": "Application cancelled.",
-
         "status": match.status,
 
     }

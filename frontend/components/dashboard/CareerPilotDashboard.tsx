@@ -58,110 +58,69 @@ export default function CareerPilotDashboard() {
             notify(
                 "Resume uploaded successfully."
             );
-
             await refreshSession();
-
         }
-
         catch (e: any) {
-
             notify(e.message);
-
         }
-
         finally {
-
             setLoading(false);
-
         }
-
     }
 
     async function handleJob(
         url: string,
     ) {
-
         setLoading(true);
-
         try {
-
             await analyzeJob(url);
-
             notify(
                 "Job analyzed successfully."
             );
-
             await refreshSession();
-
         }
-
         catch (e: any) {
-
             notify(e.message);
-
         }
-
         finally {
-
             setLoading(false);
-
         }
-
     }
 
     async function handleMatch() {
-
         setLoading(true);
-
         try {
-
             const result =
                 await matchResume();
-
             setMatch(result);
-
             notify(
                 "Matching completed."
             );
-
         }
-
         catch (e: any) {
-
             notify(e.message);
-
         }
-
         finally {
-
             setLoading(false);
-
         }
-
     }
 
     async function handleProceed() {
-
-        await proceedMatch(match.id);
-
+        await proceedMatch(match.match_id);
+        console.log("matching results", match)
+        console.log(match.match_id)
         notify(
             "Browser automation started."
         );
-
     }
-
     async function handleCancel() {
 
-        await cancelMatch(match.id);
-
+        await cancelMatch(match.match_id);
         notify(
             "Application cancelled."
         );
-
         setMatch(null);
-
     }
-
     return (
 
         <main className="min-h-screen bg-slate-950">

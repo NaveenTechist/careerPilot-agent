@@ -6,6 +6,7 @@ export async function matchResume() {
         await api.post(
             "/match/"
         );
+    console.log(response.data);
 
     return response.data;
 }
