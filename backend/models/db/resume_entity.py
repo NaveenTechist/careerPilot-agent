@@ -44,10 +44,21 @@ class ResumeEntity(Base):
     )
 
     phone: Mapped[str | None] = mapped_column(Text)
-
     location: Mapped[str | None] = mapped_column(Text)
-
     resume_json: Mapped[dict] = mapped_column(
         JSONB,
         nullable=False,
     )
+
+    file_hash: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    content_hash: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        index=True,
+)

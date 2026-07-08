@@ -10,7 +10,9 @@ Never
 import time
 import uuid
 from uuid import UUID
-
+from repositories.application_repository import (
+    ApplicationRepository,
+)
 from fastapi import APIRouter
 from fastapi import Depends
 from agents.matching_agent import MatchingAgent
@@ -38,6 +40,7 @@ def get_matching_agent():
         job_repository=JobRepository(),
         match_repository=MatchRepository(),
         parser=MatchingParserService(),
+        application_repository=ApplicationRepository(),
     )
 
 
@@ -77,6 +80,18 @@ def proceed_match(
         MatchStatus.PROCEEDED,
     )
 
+    # Sync corresponding application status
+    from database.database import SessionLocal
+    from models.db.application_entity import ApplicationEntity, ApplicationStatus
+    db = SessionLocal()
+    try:
+        app_entity = db.query(ApplicationEntity).filter(ApplicationEntity.match_id == match_id).first()
+        if app_entity:
+            app_entity.status = ApplicationStatus.PROCEEDED
+            db.commit()
+    finally:
+        db.close()
+
     return {
 
         "message": "Application approved.",
@@ -95,6 +110,18 @@ def cancel_match(
         match_id,
         MatchStatus.CANCELLED,
     )
+
+    # Sync corresponding application status
+    from database.database import SessionLocal
+    from models.db.application_entity import ApplicationEntity, ApplicationStatus
+    db = SessionLocal()
+    try:
+        app_entity = db.query(ApplicationEntity).filter(ApplicationEntity.match_id == match_id).first()
+        if app_entity:
+            app_entity.status = ApplicationStatus.CANCELLED
+            db.commit()
+    finally:
+        db.close()
 
     return {
 

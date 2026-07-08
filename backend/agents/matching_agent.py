@@ -12,7 +12,9 @@ from models.match_result import MatchResult
 from services.matching_parser_service import (
     MatchingParserService,
 )
-
+from repositories.application_repository import (
+    ApplicationRepository,
+)
 from repositories.resume_repository import ResumeRepository
 from repositories.job_repository import JobRepository
 from repositories.match_repository import MatchRepository
@@ -28,12 +30,14 @@ class MatchingAgent:
         resume_repository: ResumeRepository,
         job_repository: JobRepository,
         match_repository: MatchRepository,
+        application_repository: ApplicationRepository,
         parser: MatchingParserService,
     ):
         self.resume_repository = resume_repository
         self.job_repository = job_repository
         self.match_repository = match_repository
         self.parser = parser
+        self.application_repository = application_repository
 
     def process(self):
 
@@ -111,6 +115,15 @@ class MatchingAgent:
             resume_id=resume.id,
             job_id=job.id,
             result=result,
+        )
+
+        application_name = f"{job.company} - {job.job_title}"
+
+        application = self.application_repository.save(
+            resume_id=resume.id,
+            job_id=job.id,
+            match_id=entity.id,
+            title=application_name,
         )
 
         app_logger.success(

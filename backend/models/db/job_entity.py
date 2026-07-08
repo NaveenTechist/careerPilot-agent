@@ -46,3 +46,10 @@ class JobEntity(Base):
         JSONB,
         nullable=False,
     )
+
+    job_hash: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        unique=True,
+        index=True,
+    )

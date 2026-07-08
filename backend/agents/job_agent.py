@@ -8,6 +8,7 @@ job processing pipeline.
 from services.job_scraper_service import (
     JobScraperService,
 )
+from services.hashing_service import HashingService
 
 from services.job_parser_service import (
     JobParserService,
@@ -30,11 +31,27 @@ class JobAgent:
         self.scraper = scraper
         self.parser = parser
         self.repository = repository
-
+    
     def process(
         self,
         url: str,
     ) -> JobProfile:
+
+        app_logger.info(
+            "Checking cached job."
+        )
+
+        job_hash = HashingService.text_sha256(url)
+
+        existing = self.repository.get_by_hash(
+            job_hash
+        )
+
+        if existing:
+            app_logger.success(
+                f"Cached job found. id={existing.id}"
+            )
+            return existing
 
         app_logger.info("Job processing started.")
         job_text = self.scraper.scrape(url)
@@ -45,6 +62,7 @@ class JobAgent:
         )
 
         profile = self.parser.parse(job_text)
+        profile.application_url = url
         self.repository.save(profile)
         app_logger.success("Job processing completed.")
 

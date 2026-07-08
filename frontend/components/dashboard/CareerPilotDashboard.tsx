@@ -1,289 +1,272 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import ResumeCard from "./ResumeCard";
-import JobCard from "./JobCard";
-import MatchCard from "./MatchCard";
-import ProgressStepper from "./ProgressStepper";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Header from "./Header";
+import Sidebar, { MobileSidebar } from "./Sidebar";
 import Notification from "./Notification";
-
-import { getSession } from "@/services/session";
-import { uploadResume } from "@/services/resume";
-import { analyzeJob } from "@/services/job";
-import {
-    getCurrentMatch,
-    matchResume,
-    proceedMatch,
-    cancelMatch,
-} from "@/services/matching";
-
+import NewApplicationModal from "./NewApplicationModal";
+import ApplicationCard, { type ApplicationSummary } from "./ApplicationCard";
+import ApplicationDrawer from "./ApplicationDrawer";
+import SearchBar from "./SearchBar";
+import EmptyState from "./EmptyState";
+import LoadingSkeleton from "./LoadingSkeleton";
 import { useNotification } from "@/hooks/useNotification";
-import {
-    Bot,
-    Sparkles,
-    Cpu,
-    Zap,
-    Shield,
-    BarChart3,
-    ArrowRight,
-    Loader2
-} from "lucide-react";
+import { getApplications } from "@/services/application";
+import { Plus, FolderOpen, User, Settings } from "lucide-react";
+
+type View = "dashboard" | "applications" | "profile" | "settings";
+type Filter = "ALL" | "READY" | "CANCELLED" | "PROCEEDED" | "COMPLETED";
+type Sort = "newest" | "oldest" | "score_high" | "score_low";
 
 export default function CareerPilotDashboard() {
-    const [session, setSession] = useState<any>(null);
-    const [match, setMatch] = useState<any>(null);
-    const [loading, setLoading] = useState(false);
-    const [automationStarted, setAutomationStarted] = useState(false);
+    // ── Core State ──
+    const [activeView, setActiveView] = useState<View>("dashboard");
+    const [applications, setApplications] = useState<ApplicationSummary[]>([]);
+    const [appsLoading, setAppsLoading] = useState(true);
 
+    // ── UI State ──
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+
+    // ── Search / Filter / Sort State ──
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filter, setFilter] = useState<Filter>("ALL");
+    const [sort, setSort] = useState<Sort>("newest");
 
     const { notify, message, open, dismiss } = useNotification();
 
-    async function refreshSession() {
+    // ── Load Applications ──
+    const loadApplications = useCallback(async () => {
+        setAppsLoading(true);
         try {
-            const data = await getSession();
-            setSession(data);
-        } catch (e: any) {
-            console.error("Failed to load session:", e);
+            const data = await getApplications();
+            setApplications(data);
+        } catch (err: any) {
+            console.error("Failed to load applications:", err);
+        } finally {
+            setAppsLoading(false);
         }
-    }
-
-    useEffect(() => {
-
-        loadSession();
-        loadCurrentMatch();
-
     }, []);
 
     useEffect(() => {
-        refreshSession();
-    }, []);
+        loadApplications();
+    }, [loadApplications]);
 
-    // Listen for custom trigger from command palette to start matching
-    useEffect(() => {
-        const handleMatchTrigger = () => {
-            if (session?.status === "READY_FOR_MATCHING" && !loading) {
-                handleMatch();
-            }
-        };
-        window.addEventListener("trigger-match-analysis", handleMatchTrigger);
-        return () => window.removeEventListener("trigger-match-analysis", handleMatchTrigger);
-    }, [session, loading]);
+    // ── Filtered + Sorted Applications ──
+    const filteredApplications = useMemo(() => {
+        let result = [...applications];
 
-    // Listen to custom alert settings trigger from Command Palette
-    useEffect(() => {
-        const handleSettingsAlert = () => {
-            notify("Settings navigation will be integrated in future release.");
-        };
-        window.addEventListener("show-settings-alert", handleSettingsAlert);
-        return () => window.removeEventListener("show-settings-alert", handleSettingsAlert);
-    }, []);
-
-    async function loadCurrentMatch() {
-        try {
-            const response = await getCurrentMatch();
-            if (
-                response.data.exists
-            ) {
-                setMatch(
-                    response.data.match
-                );
-            }
+        // Filter by status
+        if (filter !== "ALL") {
+            result = result.filter((app) => app.status === filter);
         }
-        catch {
+
+        // Search by company / title / status
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter(
+                (app) =>
+                    app.title?.toLowerCase().includes(q) ||
+                    app.status?.toLowerCase().includes(q)
+            );
         }
+
+        // Sort
+        switch (sort) {
+            case "newest":
+                result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+                break;
+            case "oldest":
+                result.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
+                break;
+            case "score_high":
+                result.sort((a, b) => b.score - a.score);
+                break;
+            case "score_low":
+                result.sort((a, b) => a.score - b.score);
+                break;
+        }
+
+        return result;
+    }, [applications, filter, searchQuery, sort]);
+
+    // ── Handlers ──
+    function handleNewApplicationSuccess() {
+        setModalOpen(false);
+        notify("Application created.");
+        loadApplications();
     }
 
-    async function loadSession() {
-        const response = await getSession();
-        setSession(response.data);
+    function handleCardClick(id: string) {
+        setSelectedAppId(id);
     }
 
-    async function handleResume(file: File) {
-        setLoading(true);
-        try {
-            await uploadResume(file);
-            notify("Resume uploaded successfully.");
-            await refreshSession();
-        } catch (e: any) {
-            notify(e.message || "Failed to upload resume.");
-        } finally {
-            setLoading(false);
-        }
+    function handleDrawerStatusChange() {
+        notify("Application status updated.");
+        loadApplications();
     }
 
-    async function handleJob(url: string) {
-        setLoading(true);
-        try {
-            await analyzeJob(url);
-            notify("Job analyzed successfully.");
-            await refreshSession();
-        } catch (e: any) {
-            notify(e.message || "Failed to analyze job.");
-        } finally {
-            setLoading(false);
-        }
-    }
+    // ── Stat Counts ──
+    const totalCount = applications.length;
+    const pendingCount = applications.filter((a) => a.status === "READY" || a.status === "MATCH_PENDING" || a.status === "PENDING").length;
+    const proceededCount = applications.filter((a) => a.status === "PROCEEDED").length;
+    const completedCount = applications.filter((a) => a.status === "COMPLETED").length;
 
-    async function handleMatch() {
-        setLoading(true);
-        try {
-            const result = await matchResume();
-            setMatch(result);
-            notify("Matching completed.");
-            // Scroll to results automatically
-            setTimeout(() => {
-                window.dispatchEvent(new CustomEvent("scroll-to-match"));
-            }, 300);
-        } catch (e: any) {
-            notify(e.message || "Matching evaluation failed.");
-        } finally {
-            setLoading(false);
+    // ── Render Page Content ──
+    function renderContent() {
+        if (activeView === "profile") {
+            return (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <User className="w-12 h-12 text-slate-700 mb-4" />
+                    <h3 className="text-lg font-bold text-slate-300">Profile</h3>
+                    <p className="text-sm text-slate-500 mt-1">Coming soon in a future release.</p>
+                </div>
+            );
         }
-    }
+        if (activeView === "settings") {
+            return (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <Settings className="w-12 h-12 text-slate-700 mb-4" />
+                    <h3 className="text-lg font-bold text-slate-300">Settings</h3>
+                    <p className="text-sm text-slate-500 mt-1">Coming soon in a future release.</p>
+                </div>
+            );
+        }
 
-    async function handleProceed() {
-        setAutomationStarted(true);
-        try {
-            await proceedMatch(match.match_id);
-            notify("Browser automation started.");
-            await refreshSession();
-        } catch (e: any) {
-            notify(e.message || "Automation failed to start.");
-            setAutomationStarted(false);
-        }
-    }
+        // ── Dashboard / Applications View ──
+        return (
+            <div className="space-y-8">
+                {/* Page Title + New Application Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                            {activeView === "applications" ? "Applications" : "Dashboard"}
+                        </h2>
+                        <p className="text-sm text-slate-500 mt-1">
+                            {activeView === "applications"
+                                ? "Manage and track all your job applications"
+                                : "Overview of your career applications pipeline"
+                            }
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setModalOpen(true)}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-950/40 transition-all duration-200 active:translate-y-0.5 cursor-pointer sm:sticky sm:top-20 z-10"
+                        id="new-application-btn"
+                    >
+                        <Plus className="w-4 h-4" />
+                        New Application
+                    </button>
+                </div>
 
-    async function handleCancel() {
-        try {
-            await cancelMatch(match.match_id);
-            notify("Application cancelled.");
-            setMatch(null);
-            setAutomationStarted(false);
-            await refreshSession();
-        } catch (e: any) {
-            notify(e.message || "Cancellation failed.");
-        }
+                {/* Stats Row (Dashboard only) */}
+                {activeView === "dashboard" && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-4">
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</p>
+                            <p className="mt-1.5 text-2xl font-extrabold text-white tabular-nums">{totalCount}</p>
+                        </div>
+                        <div className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-4">
+                            <p className="text-xs font-semibold text-blue-400/70 uppercase tracking-wider">Pending</p>
+                            <p className="mt-1.5 text-2xl font-extrabold text-blue-400 tabular-nums">{pendingCount}</p>
+                        </div>
+                        <div className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-4">
+                            <p className="text-xs font-semibold text-emerald-400/70 uppercase tracking-wider">Proceeded</p>
+                            <p className="mt-1.5 text-2xl font-extrabold text-emerald-400 tabular-nums">{proceededCount}</p>
+                        </div>
+                        <div className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-4">
+                            <p className="text-xs font-semibold text-purple-400/70 uppercase tracking-wider">Completed</p>
+                            <p className="mt-1.5 text-2xl font-extrabold text-purple-400 tabular-nums">{completedCount}</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Search + Filters */}
+                <SearchBar
+                    query={searchQuery}
+                    onQueryChange={setSearchQuery}
+                    filter={filter}
+                    onFilterChange={setFilter}
+                    sort={sort}
+                    onSortChange={setSort}
+                />
+
+                {/* Past Applications Section */}
+                <div>
+                    <div className="flex items-center gap-2 mb-5">
+                        <FolderOpen className="w-4 h-4 text-slate-500" />
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+                            {activeView === "applications" ? "All Applications" : "Past Applications"}
+                        </h3>
+                        <span className="ml-1 rounded-full bg-slate-800 px-2 py-0.5 text-[11px] font-bold text-slate-400 tabular-nums">
+                            {filteredApplications.length}
+                        </span>
+                    </div>
+
+                    {appsLoading ? (
+                        <LoadingSkeleton />
+                    ) : filteredApplications.length === 0 && applications.length === 0 ? (
+                        <EmptyState onNewApplication={() => setModalOpen(true)} />
+                    ) : filteredApplications.length === 0 ? (
+                        <div className="text-center py-12">
+                            <p className="text-sm text-slate-500">
+                                No applications match your search or filter.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {filteredApplications.map((app) => (
+                                <ApplicationCard
+                                    key={app.id}
+                                    application={app}
+                                    onClick={handleCardClick}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
     }
 
     return (
-        <main className="min-h-screen bg-[#020617] text-[#f8fafc] flex flex-col">
-            <Header />
-            <Notification open={open} message={message} onClose={dismiss} />
+        <div className="min-h-screen bg-[#020617] text-[#f8fafc] flex">
+            {/* Desktop Sidebar */}
+            <Sidebar activeView={activeView} onNavigate={setActiveView} />
 
-            <div className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-10">
+            {/* Mobile Sidebar */}
+            <MobileSidebar
+                isOpen={mobileMenuOpen}
+                onClose={() => setMobileMenuOpen(false)}
+                activeView={activeView}
+                onNavigate={setActiveView}
+            />
 
-                {/* 1. Progress workflow stepper */}
-                <ProgressStepper
-                    session={session}
-                    match={match}
-                    automationStarted={automationStarted}
-                />
+            {/* Main Area */}
+            <div className="flex-1 flex flex-col min-w-0">
+                <Header onMenuToggle={() => setMobileMenuOpen((o) => !o)} />
+                <Notification open={open} message={message} onClose={dismiss} />
 
-                {/* 2. Main uploaders grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <ResumeCard session={session} onUpload={handleResume} />
-                    <JobCard session={session} onAnalyze={handleJob} />
-                </div>
-
-                {/* 3. Ready to Match Hero banner */}
-                {session?.status === "READY_FOR_MATCHING" && !match && (
-                    <div className="w-full premium-card p-6 md:p-8 bg-gradient-to-r from-blue-950/20 via-slate-900/40 to-purple-950/20 border border-blue-500/25 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_0_30px_rgba(59,130,246,0.08)]">
-                        <div className="flex items-center gap-4.5 text-left">
-                            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-950/50">
-                                <Bot className="w-6.5 h-6.5 animate-pulse" />
-                                <span className="absolute -top-1 -right-1 flex h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
-                            </div>
-                            <div>
-                                <h3 className="text-base md:text-lg font-bold text-white tracking-tight">
-                                    Ready to analyze your match?
-                                </h3>
-                                <p className="text-xs md:text-sm text-slate-400 mt-1">
-                                    Our AI will compare your profile with the job requirements and identify gaps.
-                                </p>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={handleMatch}
-                            disabled={loading}
-                            className="w-full md:w-auto inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3.5 font-bold text-white shadow-lg shadow-blue-950/45 hover:from-blue-500 hover:to-indigo-500 transition-all duration-200 active:translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed group text-sm shrink-0"
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Analyzing Match...
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles className="w-4 h-4 text-blue-200 group-hover:rotate-12 transition-transform" />
-                                    Analyze Resume Match
-                                </>
-                            )}
-                        </button>
-                    </div>
-                )}
-
-                {/* 4. Match analysis card */}
-                {match && (
-                    <MatchCard
-                        result={match}
-                        onProceed={handleProceed}
-                        onCancel={handleCancel}
-                    />
-                )}
-
-                {/* 5. Premium Platform value features footer grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t border-slate-900">
-                    <div className="premium-card p-5 flex flex-col justify-between">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/10 text-blue-400">
-                            <Cpu className="w-5 h-5" />
-                        </div>
-                        <div className="mt-4">
-                            <h4 className="text-sm font-bold text-slate-100">AI-Powered Matching</h4>
-                            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                                Advanced AI algorithms compare resumes and jobs to find key compatible areas.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="premium-card p-5 flex flex-col justify-between">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600/10 text-indigo-400">
-                            <Zap className="w-5 h-5" />
-                        </div>
-                        <div className="mt-4">
-                            <h4 className="text-sm font-bold text-slate-100">Smart Automation</h4>
-                            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                                Auto-fill applications on target platforms and save 10+ hours weekly.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="premium-card p-5 flex flex-col justify-between">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600/10 text-emerald-400">
-                            <Shield className="w-5 h-5" />
-                        </div>
-                        <div className="mt-4">
-                            <h4 className="text-sm font-bold text-slate-100">Secure & Private</h4>
-                            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                                Your career data is fully encrypted and kept 100% confidential.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="premium-card p-5 flex flex-col justify-between">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-600/10 text-purple-400">
-                            <BarChart3 className="w-5 h-5" />
-                        </div>
-                        <div className="mt-4">
-                            <h4 className="text-sm font-bold text-slate-100">Track Progress</h4>
-                            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                                Get live status notifications for your automation pipeline.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                {/* Page Content */}
+                <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
+                    {renderContent()}
+                </main>
             </div>
-        </main>
+
+            {/* New Application Modal */}
+            <NewApplicationModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                onSuccess={handleNewApplicationSuccess}
+            />
+
+            {/* Application Details Drawer */}
+            <ApplicationDrawer
+                applicationId={selectedAppId}
+                onClose={() => setSelectedAppId(null)}
+                onStatusChange={handleDrawerStatusChange}
+            />
+        </div>
     );
 }

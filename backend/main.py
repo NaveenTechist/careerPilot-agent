@@ -10,7 +10,7 @@ from core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from api.session import router as session_router
 from api.matching import router as matching_router
-
+from api.application import router as application_router
 from database.init_db import init_database
 
 init_database()
@@ -35,7 +35,7 @@ app.include_router(resume_router)
 app.include_router(job_router)
 app.include_router(session_router)
 app.include_router(matching_router)
-
+app.include_router(application_router)
 
 @app.get("/")
 def root():
