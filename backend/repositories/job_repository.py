@@ -16,11 +16,11 @@ class JobRepository:
     def save(
         self,
         profile: JobProfile,
-        job_hash: str | None = None,
+        url_hash: str = None,
     ) -> JobEntity:
-        if job_hash is None:
+        if url_hash is None:
             from services.hashing_service import HashingService
-            job_hash = HashingService.text_sha256(profile.application_url or "")
+            url_hash = HashingService.text_sha256(profile.application_url or "")
         app_logger.info("Saving job profile.")
         db: Session = SessionLocal()
         try:
@@ -28,7 +28,7 @@ class JobRepository:
                 company=profile.company,
                 job_title=profile.job_title,
                 application_url=profile.application_url,
-                job_hash=job_hash,
+                url_hash=url_hash,
                 job_json=profile.model_dump(),
             )
             db.add(entity)
@@ -66,7 +66,7 @@ class JobRepository:
 
     def get_by_hash(
         self,
-        job_hash: str,
+        url_hash: str,
     ):
         db = SessionLocal()
         try:
@@ -75,7 +75,7 @@ class JobRepository:
                 JobEntity
             )
             .filter(
-                JobEntity.job_hash == job_hash
+                JobEntity.url_hash == url_hash
             )
             .first()
             )   

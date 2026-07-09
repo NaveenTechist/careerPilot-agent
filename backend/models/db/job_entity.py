@@ -47,7 +47,7 @@ class JobEntity(Base):
         nullable=False,
     )
 
-    job_hash: Mapped[str] = mapped_column(
+    url_hash: Mapped[str] = mapped_column(
         Text,
         nullable=False,
         unique=True,

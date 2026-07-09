@@ -41,11 +41,9 @@ class JobAgent:
             "Checking cached job."
         )
 
-        job_hash = HashingService.text_sha256(url)
+        url_hash = HashingService.text_sha256(url)
 
-        existing = self.repository.get_by_hash(
-            job_hash
-        )
+        existing = self.repository.get_by_hash(url_hash)
 
         if existing:
             app_logger.success(
