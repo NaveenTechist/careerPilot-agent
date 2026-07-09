@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 type Props = {
     score: number;
 };
@@ -11,10 +15,13 @@ export default function ScoreBadge({ score }: Props) {
     };
 
     return (
-        <span
+        <motion.span
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
             className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-extrabold tabular-nums select-none ${getColors()}`}
         >
             {score}%
-        </span>
+        </motion.span>
     );
 }

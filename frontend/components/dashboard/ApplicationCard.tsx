@@ -1,5 +1,9 @@
+"use client";
+
+import { motion } from "framer-motion";
 import StatusBadge from "./StatusBadge";
 import ScoreBadge from "./ScoreBadge";
+import JourneyIndicator from "./JourneyIndicator";
 import { Briefcase, Calendar } from "lucide-react";
 
 export type ApplicationSummary = {
@@ -17,9 +21,10 @@ export type ApplicationSummary = {
 type Props = {
     application: ApplicationSummary;
     onClick: (id: string) => void;
+    highlighted?: boolean;
 };
 
-export default function ApplicationCard({ application, onClick }: Props) {
+export default function ApplicationCard({ application, onClick, highlighted = false }: Props) {
     // Parse "Company • Job Title" format from title
     const parts = application.title?.split(/[•\-–—]/).map((p) => p.trim()) || [];
     const company = parts[0] || "Unknown Company";
@@ -34,15 +39,21 @@ export default function ApplicationCard({ application, onClick }: Props) {
         : "—";
 
     return (
-        <button
+        <motion.button
+            layout
             onClick={() => onClick(application.id)}
-            className="w-full text-left rounded-2xl bg-slate-900/70 border border-slate-800/60 p-5 transition-all duration-200 hover:border-slate-700 hover:bg-slate-900 hover:shadow-xl hover:shadow-slate-950/40 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 focus:ring-offset-slate-950 group cursor-pointer"
+            data-app-id={application.id}
+            className={`w-full text-left rounded-2xl border p-5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 focus:ring-offset-slate-950 group cursor-pointer ${
+                highlighted
+                    ? "card-highlight"
+                    : "bg-slate-900/75 border-slate-800/60 hover:border-slate-700 hover:bg-slate-900 hover:shadow-xl hover:shadow-slate-950/40"
+            }`}
             aria-label={`View application for ${company} ${jobTitle}`}
         >
             {/* Top row: Company + Status */}
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-bold text-slate-100 truncate group-hover:text-white transition-colors">
+                    <h3 className="text-sm font-bold text-slate-105 truncate group-hover:text-white transition-colors">
                         {company}
                     </h3>
                     <div className="flex items-center gap-1.5 mt-1">
@@ -53,6 +64,11 @@ export default function ApplicationCard({ application, onClick }: Props) {
                 <StatusBadge status={application.status} />
             </div>
 
+            {/* Middle row: Journey Progress Indicator */}
+            <div className="mt-4">
+                <JourneyIndicator status={application.status} layout="horizontal" />
+            </div>
+
             {/* Bottom row: Date + Score */}
             <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-slate-800/50">
                 <div className="flex items-center gap-1.5 text-slate-500">
@@ -61,6 +77,6 @@ export default function ApplicationCard({ application, onClick }: Props) {
                 </div>
                 <ScoreBadge score={application.score} />
             </div>
-        </button>
+        </motion.button>
     );
 }

@@ -96,4 +96,9 @@ class ApplicationService:
         )
 
         app_logger.success("Application created successfully.")
-        return application
+        return {
+            "id": str(application.id),
+            "status": application.status,
+            "message":"Application Created",
+            "application_data": application,
+        }

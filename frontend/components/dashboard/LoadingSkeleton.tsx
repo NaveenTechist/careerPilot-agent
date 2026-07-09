@@ -4,16 +4,32 @@ export default function LoadingSkeleton() {
             {Array.from({ length: 6 }).map((_, i) => (
                 <div
                     key={i}
-                    className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-5 animate-pulse"
+                    className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-5"
+                    style={{ animationDelay: `${i * 80}ms` }}
                 >
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="h-4 w-28 rounded-lg bg-slate-800" />
-                        <div className="h-5 w-14 rounded-full bg-slate-800" />
+                    {/* Top row: Company + Status */}
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="space-y-2 flex-1">
+                            <div className="h-4 w-32 rounded-lg skeleton-shimmer" />
+                            <div className="h-3 w-24 rounded-lg skeleton-shimmer" />
+                        </div>
+                        <div className="h-5 w-16 rounded-full skeleton-shimmer" />
                     </div>
-                    <div className="h-3.5 w-36 rounded-lg bg-slate-800/60 mb-3" />
-                    <div className="flex items-center justify-between mt-5">
-                        <div className="h-3 w-20 rounded-lg bg-slate-800/40" />
-                        <div className="h-6 w-12 rounded-full bg-slate-800" />
+
+                    {/* Journey indicator placeholder */}
+                    <div className="flex items-center justify-between gap-2 my-4 px-1">
+                        {Array.from({ length: 6 }).map((_, j) => (
+                            <div key={j} className="flex flex-col items-center gap-1.5">
+                                <div className="h-5 w-5 rounded-full skeleton-shimmer" />
+                                <div className="h-2 w-8 rounded skeleton-shimmer" />
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Bottom row: Date + Score */}
+                    <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-slate-800/50">
+                        <div className="h-3 w-20 rounded-lg skeleton-shimmer" />
+                        <div className="h-6 w-12 rounded-full skeleton-shimmer" />
                     </div>
                 </div>
             ))}

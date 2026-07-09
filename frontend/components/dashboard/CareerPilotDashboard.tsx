@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Header from "./Header";
 import Sidebar, { MobileSidebar } from "./Sidebar";
-import Notification from "./Notification";
 import NewApplicationModal from "./NewApplicationModal";
 import ApplicationCard, { type ApplicationSummary } from "./ApplicationCard";
 import ApplicationDrawer from "./ApplicationDrawer";
 import SearchBar from "./SearchBar";
 import EmptyState from "./EmptyState";
 import LoadingSkeleton from "./LoadingSkeleton";
-import { useNotification } from "@/hooks/useNotification";
+import { useAppToast } from "@/hooks/useAppToast";
 import { getApplications } from "@/services/application";
 import { Plus, FolderOpen, User, Settings } from "lucide-react";
 
@@ -34,18 +34,18 @@ export default function CareerPilotDashboard() {
     const [filter, setFilter] = useState<Filter>("ALL");
     const [sort, setSort] = useState<Sort>("newest");
 
-    const { notify, message, open, dismiss } = useNotification();
+    const { toastSuccess, toastError, toastInfo } = useAppToast();
 
     // ── Load Applications ──
-    const loadApplications = useCallback(async () => {
-        setAppsLoading(true);
+    const loadApplications = useCallback(async (silent = false) => {
+        if (!silent) setAppsLoading(true);
         try {
             const data = await getApplications();
             setApplications(data);
         } catch (err: any) {
             console.error("Failed to load applications:", err);
         } finally {
-            setAppsLoading(false);
+            if (!silent) setAppsLoading(false);
         }
     }, []);
 
@@ -91,11 +91,27 @@ export default function CareerPilotDashboard() {
         return result;
     }, [applications, filter, searchQuery, sort]);
 
+    const [highlightedAppId, setHighlightedAppId] = useState<string | null>(null);
+
     // ── Handlers ──
-    function handleNewApplicationSuccess() {
+    async function handleNewApplicationSuccess(newAppId?: string) {
         setModalOpen(false);
-        notify("Application created.");
-        loadApplications();
+        toastSuccess("Application created successfully.");
+        await loadApplications(true);
+
+        if (newAppId) {
+            setHighlightedAppId(newAppId);
+            setTimeout(() => {
+                const el = document.querySelector(`[data-app-id="${newAppId}"]`);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }, 100);
+
+            setTimeout(() => {
+                setHighlightedAppId(null);
+            }, 2500);
+        }
     }
 
     function handleCardClick(id: string) {
@@ -103,7 +119,7 @@ export default function CareerPilotDashboard() {
     }
 
     function handleDrawerStatusChange() {
-        notify("Application status updated.");
+        toastSuccess("Application status updated.");
         loadApplications();
     }
 
@@ -152,7 +168,7 @@ export default function CareerPilotDashboard() {
                     </div>
                     <button
                         onClick={() => setModalOpen(true)}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-950/40 transition-all duration-200 active:translate-y-0.5 cursor-pointer sm:sticky sm:top-20 z-10"
+                        className="hidden sm:inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-950/40 transition-all duration-200 active:translate-y-0.5 cursor-pointer"
                         id="new-application-btn"
                     >
                         <Plus className="w-4 h-4" />
@@ -163,22 +179,23 @@ export default function CareerPilotDashboard() {
                 {/* Stats Row (Dashboard only) */}
                 {activeView === "dashboard" && (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-4">
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</p>
-                            <p className="mt-1.5 text-2xl font-extrabold text-white tabular-nums">{totalCount}</p>
-                        </div>
-                        <div className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-4">
-                            <p className="text-xs font-semibold text-blue-400/70 uppercase tracking-wider">Pending</p>
-                            <p className="mt-1.5 text-2xl font-extrabold text-blue-400 tabular-nums">{pendingCount}</p>
-                        </div>
-                        <div className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-4">
-                            <p className="text-xs font-semibold text-emerald-400/70 uppercase tracking-wider">Proceeded</p>
-                            <p className="mt-1.5 text-2xl font-extrabold text-emerald-400 tabular-nums">{proceededCount}</p>
-                        </div>
-                        <div className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-4">
-                            <p className="text-xs font-semibold text-purple-400/70 uppercase tracking-wider">Completed</p>
-                            <p className="mt-1.5 text-2xl font-extrabold text-purple-400 tabular-nums">{completedCount}</p>
-                        </div>
+                        {[
+                            { label: "Total", value: totalCount, color: "text-white", labelColor: "text-slate-500" },
+                            { label: "Pending", value: pendingCount, color: "text-blue-400", labelColor: "text-blue-400/70" },
+                            { label: "Proceeded", value: proceededCount, color: "text-emerald-400", labelColor: "text-emerald-400/70" },
+                            { label: "Completed", value: completedCount, color: "text-purple-400", labelColor: "text-purple-400/70" },
+                        ].map((stat, idx) => (
+                            <motion.div
+                                key={stat.label}
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.08, duration: 0.35, ease: "easeOut" }}
+                                className="rounded-2xl bg-slate-900/60 border border-slate-800/50 p-4 hover:border-slate-700/60 hover:bg-slate-900/80 transition-all duration-200"
+                            >
+                                <p className={`text-xs font-semibold uppercase tracking-wider ${stat.labelColor}`}>{stat.label}</p>
+                                <p className={`mt-1.5 text-2xl font-extrabold tabular-nums ${stat.color}`}>{stat.value}</p>
+                            </motion.div>
+                        ))}
                     </div>
                 )}
 
@@ -215,15 +232,21 @@ export default function CareerPilotDashboard() {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                            {filteredApplications.map((app) => (
-                                <ApplicationCard
-                                    key={app.id}
-                                    application={app}
-                                    onClick={handleCardClick}
-                                />
-                            ))}
-                        </div>
+                        <motion.div 
+                            layout
+                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+                        >
+                            <AnimatePresence mode="popLayout">
+                                {filteredApplications.map((app) => (
+                                    <ApplicationCard
+                                        key={app.id}
+                                        application={app}
+                                        onClick={handleCardClick}
+                                        highlighted={app.id === highlightedAppId}
+                                    />
+                                ))}
+                            </AnimatePresence>
+                        </motion.div>
                     )}
                 </div>
             </div>
@@ -246,7 +269,6 @@ export default function CareerPilotDashboard() {
             {/* Main Area */}
             <div className="flex-1 flex flex-col min-w-0">
                 <Header onMenuToggle={() => setMobileMenuOpen((o) => !o)} />
-                <Notification open={open} message={message} onClose={dismiss} />
 
                 {/* Page Content */}
                 <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
@@ -267,6 +289,15 @@ export default function CareerPilotDashboard() {
                 onClose={() => setSelectedAppId(null)}
                 onStatusChange={handleDrawerStatusChange}
             />
+
+            {/* Mobile FAB — New Application */}
+            <button
+                onClick={() => setModalOpen(true)}
+                className="fixed bottom-6 right-6 z-30 flex sm:hidden h-14 w-14 items-center justify-center rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-2xl shadow-blue-950/60 active:scale-95 transition-all duration-150 cursor-pointer"
+                aria-label="New Application"
+            >
+                <Plus className="w-6 h-6" />
+            </button>
         </div>
     );
 }

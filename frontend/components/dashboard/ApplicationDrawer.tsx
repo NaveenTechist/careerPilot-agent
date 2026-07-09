@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Loader2, CheckCircle2, AlertTriangle, Compass, Play, XCircle } from "lucide-react";
+import { X, Loader2, CheckCircle2, AlertTriangle, Compass, Play, XCircle, Terminal } from "lucide-react";
 import { getApplicationDetails } from "@/services/application";
 import { proceedMatch, cancelMatch } from "@/services/matching";
 import ScoreCircle from "./ScoreCircle";
 import SkillBadge from "./SkillBadge";
 import StatusBadge from "./StatusBadge";
+import JourneyIndicator from "./JourneyIndicator";
+import DrawerSkeleton from "./DrawerSkeleton";
 
 type Props = {
     applicationId: string | null;
@@ -19,6 +21,17 @@ export default function ApplicationDrawer({ applicationId, onClose, onStatusChan
     const [loading, setLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Detect mobile viewport size
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
 
     useEffect(() => {
         if (applicationId) {
@@ -91,6 +104,11 @@ export default function ApplicationDrawer({ applicationId, onClose, onStatusChan
         return null;
     })();
 
+    // Panel styling class based on layout mode
+    const panelClass = isMobile
+        ? "fixed bottom-0 left-0 right-0 z-50 w-full bg-slate-950 border-t border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-slide-in-bottom bottom-sheet max-h-[88vh]"
+        : "fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-slate-950 border-l border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-slide-in-drawer";
+
     return (
         <>
             {/* Backdrop */}
@@ -99,29 +117,31 @@ export default function ApplicationDrawer({ applicationId, onClose, onStatusChan
                 onClick={onClose}
             />
 
-            {/* Drawer Panel */}
-            <div className="fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-slate-950 border-l border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-slide-in-drawer">
-                {/* Drawer Header */}
+            {/* Panel */}
+            <div className={panelClass}>
+                
+                {/* Mobile Drag Indicator Bar */}
+                {isMobile && (
+                    <div className="w-12 h-1.5 bg-slate-800 rounded-full mx-auto mt-3 shrink-0" />
+                )}
+
+                {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 shrink-0">
-                    <h3 className="text-base font-bold text-white tracking-tight">
+                    <h3 className="text-sm font-bold text-white tracking-widest uppercase">
                         Application Details
                     </h3>
                     <button
                         onClick={onClose}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
-                        aria-label="Close drawer"
+                        aria-label="Close details"
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                {/* Content */}
+                {/* Panel Content */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
-                    {loading && (
-                        <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
-                        </div>
-                    )}
+                    {loading && <DrawerSkeleton />}
 
                     {error && !loading && (
                         <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
@@ -134,15 +154,15 @@ export default function ApplicationDrawer({ applicationId, onClose, onStatusChan
                             {/* Title + Status */}
                             <div className="flex items-start justify-between gap-3">
                                 <div>
-                                    <h2 className="text-lg font-bold text-white">{details.title}</h2>
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        ID: {details.id?.slice(0, 8)}...
+                                    <h2 className="text-lg font-bold text-white leading-snug">{details.title}</h2>
+                                    <p className="text-[10px] text-slate-500 mt-1 uppercase font-semibold tracking-wider">
+                                        ID: {details.id}
                                     </p>
                                 </div>
                                 <StatusBadge status={details.status} />
                             </div>
 
-                            {/* Status Message Banner */}
+                            {/* Status Banner */}
                             {statusMessage && (
                                 <div className={`p-3.5 rounded-xl text-xs font-semibold border ${
                                     details.status === "CANCELLED"
@@ -155,7 +175,7 @@ export default function ApplicationDrawer({ applicationId, onClose, onStatusChan
                                 </div>
                             )}
 
-                            {/* Score Ring */}
+                            {/* Score circular graphic */}
                             <div className="flex justify-center py-2">
                                 <ScoreCircle
                                     score={details.score || 0}
@@ -163,26 +183,23 @@ export default function ApplicationDrawer({ applicationId, onClose, onStatusChan
                                 />
                             </div>
 
-                            {/* Resume Summary */}
-                            {details.resume_summary && (
-                                <div className="space-y-2">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                        Resume Summary
-                                    </h4>
-                                    <p className="text-sm text-slate-300 leading-relaxed">
-                                        {details.resume_summary}
-                                    </p>
-                                </div>
-                            )}
+                            {/* Journey Timeline */}
+                            <div className="space-y-3 bg-slate-950/20 border border-slate-800/40 rounded-2xl p-5">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                    Application Pipeline Journey
+                                </h4>
+                                <JourneyIndicator status={details.status} layout="vertical" />
+                            </div>
 
-                            {/* Job Summary */}
-                            {details.job_summary && (
-                                <div className="space-y-2">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                        Job Summary
+                            {/* Recommendation */}
+                            {details.recommendation && (
+                                <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-2">
+                                    <h4 className="text-xs font-bold text-blue-400 uppercase tracking-widest flex items-center gap-1.5">
+                                        <Compass className="w-3.5 h-3.5" />
+                                        Recommendation
                                     </h4>
                                     <p className="text-sm text-slate-300 leading-relaxed">
-                                        {details.job_summary}
+                                        {details.recommendation}
                                     </p>
                                 </div>
                             )}
@@ -253,15 +270,26 @@ export default function ApplicationDrawer({ applicationId, onClose, onStatusChan
                                 </div>
                             )}
 
-                            {/* Recommendation */}
-                            {details.recommendation && (
-                                <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-2">
-                                    <h4 className="text-xs font-bold text-blue-400 uppercase tracking-widest flex items-center gap-1.5">
-                                        <Compass className="w-3.5 h-3.5" />
-                                        Recommendation
+                            {/* Resume Summary */}
+                            {details.resume_summary && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                        Resume Summary
                                     </h4>
                                     <p className="text-sm text-slate-300 leading-relaxed">
-                                        {details.recommendation}
+                                        {details.resume_summary}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Job Summary */}
+                            {details.job_summary && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                        Job Summary
+                                    </h4>
+                                    <p className="text-sm text-slate-300 leading-relaxed">
+                                        {details.job_summary}
                                     </p>
                                 </div>
                             )}
@@ -275,13 +303,28 @@ export default function ApplicationDrawer({ applicationId, onClose, onStatusChan
                                     <ul className="space-y-1.5">
                                         {details.next_steps.map((s: string, i: number) => (
                                             <li key={i} className="text-xs text-slate-400 flex items-center gap-2">
-                                                <span className="h-1 w-1 rounded-full bg-blue-500 shrink-0" />
+                                                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
                                                 {s}
                                             </li>
                                         ))}
                                     </ul>
                                 </div>
                             )}
+
+                            {/* Automation Log */}
+                            <div className="space-y-3 opacity-60">
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                                    <Terminal className="w-3.5 h-3.5" />
+                                    Automation Logs
+                                </h4>
+                                <div className="rounded-xl border border-slate-900 bg-slate-950/40 p-4 text-[11px] font-mono text-slate-500 select-none">
+                                    // [SYSTEM] Job Application Agent is offline.
+                                    <br />
+                                    // Waiting for matching confirmation to trigger background process logs...
+                                    <br />
+                                    // (Feature coming soon)
+                                </div>
+                            </div>
                         </>
                     )}
                 </div>
@@ -292,14 +335,14 @@ export default function ApplicationDrawer({ applicationId, onClose, onStatusChan
                         <button
                             onClick={handleCancel}
                             disabled={isCancelDisabled}
-                            className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 bg-transparent px-5 py-2.5 text-xs font-bold text-red-400 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                            className="inline-flex items-center gap-2 rounded-xl border border-red-550/30 bg-transparent px-5 py-2.5 text-xs font-bold text-red-400 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                         >
                             {actionLoading ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             ) : (
                                 <XCircle className="w-3.5 h-3.5" />
                             )}
-                            Cancel
+                            Cancel Match
                         </button>
                         <button
                             onClick={handleProceed}
@@ -311,7 +354,7 @@ export default function ApplicationDrawer({ applicationId, onClose, onStatusChan
                             ) : (
                                 <Play className="w-3.5 h-3.5 fill-current" />
                             )}
-                            Proceed
+                            Proceed Application
                         </button>
                     </div>
                 )}

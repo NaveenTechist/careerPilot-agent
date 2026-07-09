@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Upload, FileText, AlertCircle, Loader2 } from "lucide-react";
 import { createApplication } from "@/services/application";
+import AIProcessingTimeline, { type ProcessingStatus } from "./AIProcessingTimeline";
 
 type Props = {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (newAppId?: string) => void;
 };
 
 export default function NewApplicationModal({ isOpen, onClose, onSuccess }: Props) {
@@ -16,8 +17,20 @@ export default function NewApplicationModal({ isOpen, onClose, onSuccess }: Prop
     const [dragActive, setDragActive] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [phase, setPhase] = useState<"form" | "processing" | "success" | "error">("form");
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Reset states when opening modal
+    useEffect(() => {
+        if (isOpen) {
+            setFile(null);
+            setUrl("");
+            setErrorMsg(null);
+            setLoading(false);
+            setPhase("form");
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -109,15 +122,29 @@ export default function NewApplicationModal({ isOpen, onClose, onSuccess }: Prop
             return;
         }
 
+        setPhase("processing");
         setLoading(true);
         try {
-            await createApplication(file, url.trim());
-            onSuccess();
+            const result = await createApplication(file, url.trim());
+            setPhase("success");
+            
+            // Extract the new application's ID from result
+            const newAppId = result?.id || result?.application_data?.id;
+
+            setTimeout(() => {
+                onSuccess(newAppId);
+            }, 800);
         } catch (err: any) {
+            setPhase("error");
             setErrorMsg(err.message || "Failed to create application.");
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleCloseAfterError = () => {
+        setPhase("form");
+        setErrorMsg(null);
     };
 
     return (
@@ -128,125 +155,141 @@ export default function NewApplicationModal({ isOpen, onClose, onSuccess }: Prop
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 shrink-0">
                     <h3 className="text-lg font-bold text-white tracking-tight">
-                        New Application
+                        {phase === "form" ? "New Application" : "AI Processing Agent"}
                     </h3>
-                    <button
-                        onClick={onClose}
-                        disabled={loading}
-                        className="rounded-lg p-1.5 text-slate-450 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer disabled:opacity-55"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                {/* Form fields */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    
-                    {/* Error Banner */}
-                    {errorMsg && (
-                        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex gap-2.5 items-start">
-                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                            <p className="leading-relaxed">{errorMsg}</p>
-                        </div>
-                    )}
-
-                    {/* Resume Upload Drag & Drop Area */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                            Upload Resume (PDF only)
-                        </label>
-                        <div
-                            onDragEnter={handleDrag}
-                            onDragOver={handleDrag}
-                            onDragLeave={handleDrag}
-                            onDrop={handleDrop}
-                            onClick={() => !loading && fileInputRef.current?.click()}
-                            className={`relative rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center min-h-[140px] ${
-                                dragActive 
-                                    ? "border-blue-500 bg-blue-500/5" 
-                                    : file 
-                                        ? "border-emerald-500/40 bg-emerald-500/5" 
-                                        : "border-slate-800 hover:border-slate-700 bg-slate-950/20"
-                            } ${loading ? "opacity-50 pointer-events-none" : ""}`}
-                        >
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".pdf"
-                                onChange={handleFileInput}
-                                className="hidden"
-                                disabled={loading}
-                            />
-                            {file ? (
-                                <>
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
-                                        <FileText className="w-6 h-6" />
-                                    </div>
-                                    <h4 className="mt-3 text-sm font-semibold text-slate-200 truncate max-w-[280px]">
-                                        {file.name}
-                                    </h4>
-                                    <p className="mt-1 text-[11px] text-slate-500">
-                                        {(file.size / (1024 * 1024)).toFixed(2)} MB • Click to replace
-                                    </p>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-slate-400">
-                                        <Upload className="w-5 h-5" />
-                                    </div>
-                                    <h4 className="mt-3 text-sm font-semibold text-slate-350">
-                                        Drag & drop resume here
-                                    </h4>
-                                    <p className="mt-1 text-xs text-slate-500">
-                                        or click to browse from files (Max 10MB)
-                                    </p>
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Job URL Input */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                            Job Posting URL
-                        </label>
-                        <input
-                            type="text"
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
-                            placeholder="https://linkedin.com/jobs/view/..."
+                    {phase === "form" && (
+                        <button
+                            onClick={onClose}
                             disabled={loading}
-                            className="w-full rounded-xl border border-slate-800 bg-slate-950/40 p-3.5 text-sm text-slate-100 placeholder-slate-550 outline-none transition-all duration-200 focus:border-blue-500/70 focus:bg-slate-950/70 focus:ring-4 focus:ring-blue-500/10 disabled:opacity-50"
-                        />
-                    </div>
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer disabled:opacity-55"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
 
-                {/* Footer Buttons */}
-                <div className="px-6 py-4 border-t border-slate-800/80 bg-slate-950/30 flex justify-end gap-3.5">
-                    <button
-                        onClick={onClose}
-                        disabled={loading}
-                        className="rounded-xl border border-slate-800 hover:border-slate-700 bg-transparent px-5 py-2.5 text-xs font-bold text-slate-300 hover:text-white transition-all duration-150 cursor-pointer disabled:opacity-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={submit}
-                        disabled={loading || !file || !url.trim()}
-                        className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 px-6 py-2.5 text-xs font-bold text-white transition-all duration-150 active:translate-y-0.5 disabled:translate-y-0 cursor-pointer"
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                Creating Application...
-                            </>
-                        ) : (
-                            "Create Application"
+                {/* Form fields OR Progress timeline */}
+                {phase === "form" ? (
+                    <>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            
+                            {/* Error Banner */}
+                            {errorMsg && (
+                                <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex gap-2.5 items-start">
+                                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                                    <p className="leading-relaxed">{errorMsg}</p>
+                                </div>
+                            )}
+
+                            {/* Resume Upload Drag & Drop Area */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                    Upload Resume (PDF only)
+                                </label>
+                                <div
+                                    onDragEnter={handleDrag}
+                                    onDragOver={handleDrag}
+                                    onDragLeave={handleDrag}
+                                    onDrop={handleDrop}
+                                    onClick={() => !loading && fileInputRef.current?.click()}
+                                    className={`relative rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center min-h-[140px] ${
+                                        dragActive 
+                                            ? "border-blue-500 bg-blue-500/5" 
+                                            : file 
+                                                ? "border-emerald-500/40 bg-emerald-500/5" 
+                                                : "border-slate-800 hover:border-slate-700 bg-slate-950/20"
+                                    } ${loading ? "opacity-50 pointer-events-none" : ""}`}
+                                >
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".pdf"
+                                        onChange={handleFileInput}
+                                        className="hidden"
+                                        disabled={loading}
+                                    />
+                                    {file ? (
+                                        <>
+                                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+                                                <FileText className="w-6 h-6" />
+                                            </div>
+                                            <h4 className="mt-3 text-sm font-semibold text-slate-200 truncate max-w-[280px]">
+                                                {file.name}
+                                            </h4>
+                                            <p className="mt-1 text-[11px] text-slate-500">
+                                                {(file.size / (1024 * 1024)).toFixed(2)} MB • Click to replace
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-slate-400">
+                                                <Upload className="w-5 h-5" />
+                                            </div>
+                                            <h4 className="mt-3 text-sm font-semibold text-slate-350">
+                                                Drag & drop resume here
+                                            </h4>
+                                            <p className="mt-1 text-xs text-slate-500">
+                                                or click to browse from files (Max 10MB)
+                                            </p>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Job URL Input */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                    Job Posting URL
+                                </label>
+                                <input
+                                    type="text"
+                                    value={url}
+                                    onChange={(e) => setUrl(e.target.value)}
+                                    placeholder="https://linkedin.com/jobs/view/..."
+                                    disabled={loading}
+                                    className="w-full rounded-xl border border-slate-800 bg-slate-950/40 p-3.5 text-sm text-slate-100 placeholder-slate-550 outline-none transition-all duration-200 focus:border-blue-500/70 focus:bg-slate-950/70 focus:ring-4 focus:ring-blue-500/10 disabled:opacity-50"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Footer Buttons */}
+                        <div className="px-6 py-4 border-t border-slate-800/80 bg-slate-950/30 flex justify-end gap-3.5 shrink-0">
+                            <button
+                                onClick={onClose}
+                                disabled={loading}
+                                className="rounded-xl border border-slate-800 hover:border-slate-700 bg-transparent px-5 py-2.5 text-xs font-bold text-slate-300 hover:text-white transition-all duration-150 cursor-pointer disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={submit}
+                                disabled={loading || !file || !url.trim()}
+                                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 px-6 py-2.5 text-xs font-bold text-white transition-all duration-150 active:translate-y-0.5 disabled:translate-y-0 cursor-pointer animate-fade-in-up"
+                            >
+                                Create Application
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex-1 overflow-y-auto p-6 flex flex-col justify-between min-h-[350px]">
+                        <AIProcessingTimeline
+                            status={phase === "success" ? "success" : phase === "error" ? "error" : "processing"}
+                            errorMsg={errorMsg}
+                        />
+                        {phase === "error" && (
+                            <div className="mt-4 flex justify-end shrink-0">
+                                <button
+                                    onClick={handleCloseAfterError}
+                                    className="rounded-xl bg-slate-850 hover:bg-slate-800 px-5 py-2.5 text-xs font-bold text-slate-300 hover:text-white transition-all duration-150 cursor-pointer"
+                                >
+                                    Retry Form
+                                </button>
+                            </div>
                         )}
-                    </button>
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );
