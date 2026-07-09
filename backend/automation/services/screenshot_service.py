@@ -1,0 +1,40 @@
+"""
+Screenshot Service.
+
+Responsible only for:
+
+- Creating screenshot folders
+- Saving screenshots
+- Returning saved path
+"""
+
+from pathlib import Path
+
+
+class ScreenshotService:
+
+    ROOT = Path("automation/screenshots")
+
+    @classmethod
+    def save(
+        cls,
+        page,
+        application_id: str,
+        filename: str,
+    ) -> str:
+
+        folder = cls.ROOT / application_id
+
+        folder.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        path = folder / filename
+
+        page.screenshot(
+            path=str(path),
+            full_page=True,
+        )
+
+        return str(path)

@@ -16,10 +16,14 @@ from database.base import Base
 
 
 class ApplicationStatus(str, Enum):
-
+    
+    CREATED = "CREATED"
     MATCH_PENDING = "MATCH_PENDING"
     READY = "READY"
     PROCEEDED = "PROCEEDED"
+    AUTOMATION_RUNNING = "AUTOMATION_RUNNING"
+    SUBMITTED = "SUBMITTED"
+    FAILED = "FAILED"
     CANCELLED = "CANCELLED"
     COMPLETED = "COMPLETED"
 

@@ -105,25 +105,16 @@ class ApplicationRepository:
         self,
         application_id: UUID,
     ):
-
         db = SessionLocal()
-
         try:
-
             return (
-
                 db.query(ApplicationEntity)
-
                 .filter(
                     ApplicationEntity.id == application_id
                 )
-
                 .first()
-
             )
-
         finally:
-
             db.close()
 
     # ----------------------------------------
