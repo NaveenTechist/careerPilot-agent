@@ -1,124 +1,79 @@
 """
 Browser Actions.
 
-Reusable browser operations.
-
-Never write Playwright code
-inside AutomationAgent.
-
-AutomationAgent only calls
-BrowserActions.
+Common Playwright actions.
 """
 
 from playwright.sync_api import Page
+from core.logger import app_logger
+
 
 class BrowserActions:
 
-    # ----------------------------------------
-
     @staticmethod
-    def open_url(
+    def goto(
         page: Page,
         url: str,
     ):
+
+        app_logger.info(
+            f"Opening {url}"
+        )
+
         page.goto(
             url,
             wait_until="networkidle",
+            timeout=60000,
         )
 
-    # ----------------------------------------
+        app_logger.success(
+            "Job page loaded."
+        )
+
+    # -----------------------------------------
+
+    @staticmethod
+    def click(
+        locator,
+    ):
+
+        locator.scroll_into_view_if_needed()
+
+        locator.click()
+
+    # -----------------------------------------
+
+    @staticmethod
+    def fill(
+        locator,
+        value: str,
+    ):
+
+        locator.scroll_into_view_if_needed()
+
+        locator.fill(
+            str(value)
+        )
+
+    # -----------------------------------------
+
+    @staticmethod
+    def upload(
+        locator,
+        file_path: str,
+    ):
+
+        locator.set_input_files(
+            file_path
+        )
+
+    # -----------------------------------------
 
     @staticmethod
     def wait(
         page: Page,
-        seconds: int,
     ):
-        page.wait_for_timeout(
-            seconds * 1000
-        )
 
-    # ----------------------------------------
-
-    @staticmethod
-    def click(
-        page: Page,
-        selector: str,
-    ):
-        page.locator(
-            selector
-        ).click()
-
-    # ----------------------------------------
-
-    @staticmethod
-    def fill(
-        page: Page,
-        selector: str,
-        value: str,
-    ):
-        page.locator(
-            selector
-        ).fill(value)
-
-    # ----------------------------------------
-
-    @staticmethod
-    def upload(
-        page: Page,
-        selector: str,
-        file_path: str,
-    ):
-        page.locator(
-            selector
-        ).set_input_files(
-            file_path
-        )
-
-    # ----------------------------------------
-
-    @staticmethod
-    def exists(
-        page: Page,
-        selector: str,
-    ) -> bool:
-        return page.locator(
-            selector
-        ).count() > 0
-
-    # ----------------------------------------
-
-    @staticmethod
-    def text(
-        page: Page,
-        selector: str,
-    ) -> str:
-        return page.locator(
-            selector
-        ).inner_text()
-
-    # ----------------------------------------
-
-    @staticmethod
-    def scroll_bottom(
-        page: Page,
-    ):
-        page.evaluate(
-            """
-            window.scrollTo(
-                0,
-                document.body.scrollHeight
-            );
-            """
-        )
-
-    # ----------------------------------------
-
-    @staticmethod
-    def screenshot(
-        page: Page,
-        path: str,
-    ):
-        page.screenshot(
-            path=path,
-            full_page=True,
+        page.wait_for_load_state(
+            "networkidle"
         )

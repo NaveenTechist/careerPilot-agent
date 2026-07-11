@@ -1,15 +1,14 @@
 """
 Automation Log Service.
 
-Responsible only for:
-
-- Writing automation logs
-- Console output
-- Future DB integration
+Responsible only for writing
+automation logs.
 """
 
 from pathlib import Path
 from datetime import datetime
+
+from core.logger import app_logger
 
 
 class AutomationLogService:
@@ -34,14 +33,45 @@ class AutomationLogService:
             "%Y-%m-%d %H:%M:%S"
         )
 
-        with open(
-            logfile,
+        line = f"[{timestamp}] {message}\n"
+
+        with logfile.open(
             "a",
             encoding="utf-8",
         ) as file:
 
-            file.write(
-                f"[{timestamp}] {message}\n"
-            )
+            file.write(line)
 
-        print(message)
+        app_logger.info(message)
+
+    # --------------------------------------------------
+
+    @classmethod
+    def clear(
+        cls,
+        application_id: str,
+    ):
+
+        logfile = cls.ROOT / f"{application_id}.log"
+
+        if logfile.exists():
+
+            logfile.unlink()
+
+    # --------------------------------------------------
+
+    @classmethod
+    def read(
+        cls,
+        application_id: str,
+    ):
+
+        logfile = cls.ROOT / f"{application_id}.log"
+
+        if not logfile.exists():
+
+            return []
+
+        return logfile.read_text(
+            encoding="utf-8",
+        ).splitlines()

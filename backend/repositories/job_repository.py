@@ -10,6 +10,7 @@ from database.database import SessionLocal
 from models.job_profile import JobProfile
 from models.db.job_entity import JobEntity
 from core.logger import app_logger
+import uuid
 
 
 class JobRepository:
@@ -63,6 +64,22 @@ class JobRepository:
             app_logger.success("All jobs deleted.")
         finally:
             db.close()
+
+    # -----------------------------------------------------
+
+    def get_by_id(
+        self,
+        job_id: uuid.UUID,
+    ) -> JobEntity | None:
+        db = SessionLocal()
+        try:
+            return (
+            db.query(JobEntity)
+            .filter(JobEntity.id == job_id)
+            .first()
+        )
+        finally:
+            db.close()       
 
     def get_by_hash(
         self,

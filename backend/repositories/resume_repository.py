@@ -19,7 +19,7 @@ from models.db.resume_entity import ResumeEntity
 
 from models.resume_profile import ResumeProfile
 from models.db.resume_entity import ResumeEntity
-
+import uuid
 from core.logger import app_logger
 
 
@@ -96,6 +96,26 @@ class ResumeRepository:
 
         finally:
             db.close()
+
+    # -----------------------------------------------------     
+    def get_by_id(
+        self,
+        resume_id: uuid.UUID,
+    ):
+        db: Session = SessionLocal()
+        try:
+            return (
+                db.query(
+                    ResumeEntity
+                )
+                .filter(
+                    ResumeEntity.id == resume_id
+                )
+                .first()
+            )
+        finally:
+            db.close()
+    # ----------------------------------------------------- 
 
     def get_by_hash(
         self,

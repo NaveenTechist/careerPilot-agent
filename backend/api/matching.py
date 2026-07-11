@@ -10,15 +10,15 @@ Never
 import time
 import uuid
 from uuid import UUID
-from repositories.application_repository import (
-    ApplicationRepository,
-)
+from repositories.application_repository import (ApplicationRepository,)
 from fastapi import APIRouter
 from fastapi import Depends
 from agents.matching_agent import MatchingAgent
 from models.db.match_entity import MatchStatus
 from repositories.resume_repository import ResumeRepository
 from repositories.job_repository import JobRepository
+from fastapi import BackgroundTasks
+from automation.agents.automation_agent import AutomationAgent
 from repositories.match_repository import MatchRepository
 from services.matching_parser_service import (
     MatchingParserService,
@@ -41,6 +41,15 @@ def get_matching_agent():
         match_repository=MatchRepository(),
         parser=MatchingParserService(),
         application_repository=ApplicationRepository(),
+    ) 
+
+def get_automation_agent():
+
+    return AutomationAgent(
+        application_repository=ApplicationRepository(),
+        resume_repository=ResumeRepository(),
+        job_repository=JobRepository(),
+        match_repository=MatchRepository(),
     )
 
 
@@ -72,6 +81,7 @@ def analyze(
 @router.post("/{match_id}/proceed")
 def proceed_match(
     match_id: UUID,
+    background_tasks: BackgroundTasks,
 ):
 
     repository = MatchRepository()
@@ -84,20 +94,31 @@ def proceed_match(
     from database.database import SessionLocal
     from models.db.application_entity import ApplicationEntity, ApplicationStatus
     db = SessionLocal()
+    application_id = None
     try:
-        app_entity = db.query(ApplicationEntity).filter(ApplicationEntity.match_id == match_id).first()
+        app_entity = (
+            db.query(ApplicationEntity)
+            .filter(ApplicationEntity.match_id == match_id)
+            .first()
+        )
+
         if app_entity:
             app_entity.status = ApplicationStatus.PROCEEDED
+            application_id = str(app_entity.id)
             db.commit()
     finally:
         db.close()
+    if application_id:
+        automation_agent = get_automation_agent()
+
+        background_tasks.add_task(
+            automation_agent.process,
+            application_id,
+        )
 
     return {
-
         "message": "Application approved.",
-
         "status": match.status,
-
     }
 
 @router.post("/{match_id}/cancel")
@@ -115,13 +136,21 @@ def cancel_match(
     from database.database import SessionLocal
     from models.db.application_entity import ApplicationEntity, ApplicationStatus
     db = SessionLocal()
+    application_id = None
     try:
-        app_entity = db.query(ApplicationEntity).filter(ApplicationEntity.match_id == match_id).first()
+        app_entity = (
+            db.query(ApplicationEntity)
+            .filter(ApplicationEntity.match_id == match_id)
+            .first()
+        )
+
         if app_entity:
             app_entity.status = ApplicationStatus.CANCELLED
+            application_id = str(app_entity.id)
             db.commit()
     finally:
         db.close()
+    
 
     return {
 
@@ -131,27 +160,16 @@ def cancel_match(
     }
 @router.get("/current")
 def current_match(
-
     agent: MatchingAgent = Depends(
         get_matching_agent
     ),
-
 ):
-
     result = agent.get_current_match()
-
     if result is None:
-
         return {
-
             "exists": False,
-
         }
-
     return {
-
         "exists": True,
-
         "match": result,
-
     }
