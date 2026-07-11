@@ -1,353 +1,336 @@
-# 🚀 CareerPilot Agent
+# 🚀 CareerPilot AI Agent
 
-> An AI-powered backend application that automates the first stages of the job application process by transforming resumes into structured data, with a production-oriented architecture designed for future end-to-end job application automation.
+An end-to-end AI-powered job application platform that analyzes resumes, matches them with job descriptions, and automates the job application workflow using browser automation.
 
 ---
 
-## 📌 Overview
+# 📌 Overview
 
-CareerPilot Agent is a backend-first AI application built to simplify and automate job applications.
+CareerPilot is designed to reduce the manual effort involved in job applications.
 
-The current implementation focuses on building a reliable AI pipeline that extracts structured information from resumes using Google's Gemini models, validates the output with Pydantic, and exposes it through a clean FastAPI API.
-
-The project is designed with scalability in mind, making it easy to extend into a complete AI Career Copilot.
+The platform combines AI resume analysis, job parsing, intelligent matching, and browser automation into a single workflow while keeping the user in control whenever manual verification is required.
 
 ---
 
 # ✨ Current Features
 
-### ✅ Resume Upload API
+## 📄 Resume Processing
 
-* Upload resume in PDF format
-* File validation
-* Temporary file management
-* Automatic cleanup
-
-### ✅ PDF Processing
-
-* Extracts text using PyMuPDF
-* Handles corrupted PDFs
-* Custom exception handling
-
-### ✅ AI Resume Parsing
-
-* Gemini 2.5 Flash integration
-* Prompt-based structured extraction
-* Converts unstructured resume text into structured JSON
-
-### ✅ AI Response Normalization
-
-* Cleans Gemini responses
-* Normalizes inconsistent field names
-* Handles missing values
-* Prepares data for validation
-
-### ✅ Resume Profile Generation
-
-Extracts:
-
-* Personal Information
-* Skills
-* Education
-* Experience
-* Projects
-* Certifications
-* Languages
-
-using strongly typed Pydantic models.
-
-### ✅ Production-Oriented Architecture
-
-* FastAPI
-* Dependency Injection
-* Layered Architecture
-* Custom Exceptions
-* Structured Logging
-* Service-Based Design
-* Type Safety
-* Clean Separation of Concerns
+- Upload PDF resumes
+- Resume text extraction
+- AI-powered resume parsing
+- Structured resume profile generation
+- Resume deduplication using SHA-256 hashing
+- Resume stored with structured JSON
 
 ---
 
-# 🏗️ Project Architecture
+## 💼 Job Processing
 
-```text
-Client
-    │
-    ▼
-FastAPI API
-    │
-    ▼
-Resume Agent
-    │
-    ▼
-PDF Service
-    │
-    ▼
-Resume Parser Service
-    │
-    ▼
-Prompt Loader
-    │
-    ▼
-Gemini Client
-    │
-    ▼
-Google Gemini
-    │
-    ▼
-Resume Normalizer
-    │
-    ▼
-Pydantic Validation
-    │
-    ▼
-ResumeProfile
+- Job URL validation
+- AI-powered job description parsing
+- Structured job profile generation
+- Job URL deduplication
+- Job metadata storage
+- Original application URL preserved
+
+---
+
+## 🤖 AI Resume Matching
+
+- Resume vs Job semantic comparison
+- Skill gap analysis
+- Match score generation
+- Strengths identification
+- Missing skills detection
+- AI-generated recommendations
+- Structured match report
+
+---
+
+## 📂 Application Management
+
+- Unified Application entity
+- Resume + Job + Match linked together
+- Application lifecycle tracking
+- Application history
+- Multiple applications support
+- Application status management
+
+Current Status Flow
+
+```
+Created
+↓
+
+Match Pending
+↓
+
+Ready
+
+↓
+
+Proceeded
+
+↓
+
+Completed
+
+OR
+
+Cancelled
 ```
 
 ---
 
-# 📁 Project Structure
+## 🎨 Frontend Dashboard
 
-```text
-backend/
+Production-style responsive dashboard.
 
-├── api/
-│   └── resume.py
-│
-├── agents/
-│   └── resume_agent.py
-│
-├── services/
-│   ├── pdf_service.py
-│   ├── resume_parser_service.py
-│   └── resume_normalizer.py
-│
-├── llm/
-│   ├── gemini_client.py
-│   ├── prompt_loader.py
-│   └── prompts/
-│       └── resume_parser.md
-│
-├── models/
-│   ├── resume.py
-│   └── resume_profile.py
-│
-├── core/
-│   ├── config.py
-│   ├── exceptions.py
-│   └── logger.py
-│
-├── temp/
-│
-├── main.py
-│
-└── requirements / pyproject.toml
+Features
+
+- Dashboard Overview
+- Application History
+- Search Applications
+- Filter Applications
+- Sort Applications
+- Match Score Display
+- Application Details Drawer
+- Mobile Responsive UI
+- Dark Theme UI
+- Resume Upload Modal
+- Drag & Drop Resume Upload
+- Client-side Validation
+- Real-time Status Refresh
+
+---
+
+## ⚡ Automation Engine
+
+Current automation pipeline
+
+```
+Proceed
+
+↓
+
+Background Automation
+
+↓
+
+Launch Chromium
+
+↓
+
+Open Job URL
+
+↓
+
+Detect Apply Button
+
+↓
+
+Click Apply
+
+↓
+
+Capture Screenshot
+
+↓
+
+Automation Logs
+
+↓
+
+Browser Cleanup
+```
+
+Implemented Components
+
+- Browser Manager
+- Browser Actions
+- Apply Button Detector
+- Apply Action
+- Screenshot Service
+- Automation Log Service
+- Background Automation Execution
+
+---
+
+## 📝 Form Automation Foundation
+
+Generic automation architecture for supporting multiple career portals.
+
+Implemented
+
+- Generic Form Detector
+- Field Classifier
+- Form Mapper
+- Fill Engine Architecture
+- Navigation Engine Architecture
+- Login Detector
+- CAPTCHA Detector
+- Dynamic Form Scanning
+
+---
+
+## 🏗️ Architecture
+
+Project follows a modular AI Agent architecture.
+
+```
+Frontend
+
+↓
+
+FastAPI APIs
+
+↓
+
+AI Agents
+
+↓
+
+Services
+
+↓
+
+Repositories
+
+↓
+
+PostgreSQL
+
+↓
+
+Automation Engine
+
+↓
+
+Playwright Browser
 ```
 
 ---
 
-# ⚙️ Tech Stack
+## 🔒 Production Practices
 
-### Backend
-
-* Python
-* FastAPI
-* Uvicorn
-
-### AI
-
-* Google Gemini 2.5 Flash
-* Prompt Engineering
-
-### Data Validation
-
-* Pydantic v2
-
-### PDF Processing
-
-* PyMuPDF
-
-### Logging
-
-* Loguru
-
-### Dependency Management
-
-* uv
-
----
-
-# 🔄 Current Processing Flow
-
-```text
-Upload Resume
-
-↓
-
-Validate PDF
-
-↓
-
-Extract Text
-
-↓
-
-Generate AI Prompt
-
-↓
-
-Gemini Processing
-
-↓
-
-Normalize Response
-
-↓
-
-Validate using Pydantic
-
-↓
-
-Return Structured Resume Profile
-```
-
----
-
-# 📌 Current API
-
-## Upload Resume
-
-```
-POST /resume
-```
-
-Accepts
-
-* PDF Resume
-
-Returns
-
-```json
-{
-    "name": "...",
-    "email": "...",
-    "skills": [],
-    "education": [],
-    "experience": [],
-    "projects": []
-}
-```
-
----
-
-# 🎯 Design Principles
-
-The project follows several production-oriented software engineering principles:
-
-* Layered Architecture
-* Dependency Injection
-* Single Responsibility Principle (SRP)
-* Separation of Concerns
-* Strong Typing with Pydantic
-* Reusable Services
-* Structured Logging
-* Custom Exception Handling
-* Modular AI Integration
+- Repository Pattern
+- Dependency Injection
+- Service Layer
+- Agent-based Architecture
+- Modular Automation Components
+- Structured Logging
+- Background Task Execution
+- Database-backed Status Tracking
+- Error Handling
+- Resume & Job Deduplication
+- Clean Separation of Responsibilities
 
 ---
 
 # 🚧 In Progress
 
-The project is actively under development.
+## Real-Time Automation
 
-Current focus includes:
-
-* Improving AI response accuracy
-* Better skill normalization
-* Enhanced project technology extraction
-* Structured experience parsing
-* Generic AI response parser
-* Better prompt engineering
-* Global exception handlers
-* Request tracing and performance metrics
+- Live Automation Timeline
+- Server-Sent Events (SSE)
+- Automation Progress Streaming
+- Live Browser Status
+- Live Automation Logs
 
 ---
 
-# 🗺️ Roadmap
+## Human-in-the-Loop Automation
 
-## Phase 1 (Completed)
+When automation requires user verification, CareerPilot pauses and requests user input instead of making assumptions.
 
-* Resume Upload API
-* PDF Text Extraction
-* AI Resume Parsing
-* Structured Resume Profile
-* Production Backend Foundation
+Planned interactions include:
 
----
+- Login Required
+- CAPTCHA Verification
+- Salary Expectations
+- Visa Sponsorship
+- Work Authorization
+- Notice Period
+- Disability Declaration
+- Custom Employer Questions
 
-## Phase 2 (In Progress)
-
-* Job Description Parser
-* Job Profile Generation
-* AI Response Improvements
-* Matching Engine
-* Resume Optimization Suggestions
+Automation resumes automatically after user input.
 
 ---
 
-## Phase 3 (Planned)
+## Universal Form Automation
 
-* Browser Automation
-* Automatic Job Application
-* Playwright Integration
-* Smart Form Filling
-* Resume Upload Automation
+Building a generic form engine capable of handling multiple ATS platforms.
 
----
+Target Platforms
 
-## Phase 4 (Planned)
-
-* Authentication
-* User Dashboard
-* Database Integration
-* Resume History
-* Job Tracking
-* Notifications
-* Analytics
+- LinkedIn
+- Workday
+- Greenhouse
+- Lever
+- SAP SuccessFactors
+- Oracle Recruiting
+- Taleo
+- Naukri
+- Company Career Portals
 
 ---
 
-## Phase 5 (Vision)
+## AI Automation
 
-CareerPilot aims to evolve into a complete AI Career Copilot capable of:
+Upcoming capabilities
 
-* Resume Analysis
-* Resume Optimization
-* Job Matching
-* Cover Letter Generation
-* Interview Preparation
-* Automated Job Applications
-* Career Insights
-* Personalized AI Recommendations
-
----
-
-# 📖 Learning Objectives
-
-This project is being developed to explore and implement production-oriented AI backend engineering practices, including:
-
-* AI-powered backend development
-* Large Language Model integration
-* Clean Architecture
-* FastAPI application design
-* Production-ready API development
-* Structured data validation
-* AI workflow orchestration
-* Scalable software architecture
+- Multi-step form navigation
+- Intelligent field mapping
+- Resume upload automation
+- Dynamic question understanding
+- AI-powered field selection
+- Automatic application submission
+- Submission proof generation
 
 ---
 
-# 📄 License
+## AutoPilot Mode (Planned)
 
-This project is intended for educational purposes, portfolio demonstration, and continued research into AI-powered career automation systems.
+A fully autonomous job search and application workflow.
+
+Vision
+
+```
+Upload Resume
+
+↓
+
+AI searches relevant jobs
+
+↓
+
+Ranks opportunities
+
+↓
+
+Requests user approval
+
+↓
+
+Applies automatically
+
+↓
+
+Tracks application status
+
+↓
+
+Provides submission proof
+
+↓
+
+Maintains complete application history
+```
+
+---
+
+# 🎯 Project Goal
+
+To build a production-ready AI Job Application Agent capable of understanding resumes, analyzing jobs, automating applications across multiple career portals, and keeping users in control through a secure Human-in-the-Loop workflow.
