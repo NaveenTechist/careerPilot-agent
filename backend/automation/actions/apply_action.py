@@ -34,13 +34,10 @@ class ApplyAction:
         BrowserActions.click(
             button
         )
-
         BrowserActions.wait(
             page
         )
-
         app_logger.success(
             "Apply button clicked."
         )
-
         return True

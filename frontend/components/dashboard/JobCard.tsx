@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { 
-    Briefcase, 
-    Link2, 
-    Sparkles, 
-    Building2, 
-    ShieldCheck, 
-    Loader2, 
-    Layers, 
+import {
+    Briefcase,
+    Link2,
+    Sparkles,
+    Building2,
+    ShieldCheck,
+    Loader2,
+    Layers,
     BookOpen,
     ArrowUpRight
 } from "lucide-react";
@@ -98,7 +98,7 @@ export default function JobCard({ session, onAnalyze }: Props) {
                                 disabled={loading}
                             />
                         </div>
-                        
+
                         <div className="rounded-xl border border-slate-900 bg-slate-950/40 p-4 text-xs text-slate-500 flex gap-2.5">
                             <Layers className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                             <p className="leading-relaxed">

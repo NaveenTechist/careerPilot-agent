@@ -19,8 +19,8 @@ interface Stage {
 
 const STAGES: Stage[] = [
     { id: 1, label: "Resume", description: "Uploaded & parsed", icon: <FileText className="w-3.5 h-3.5" /> },
-    { id: 2, label: "Job Analysis", description: "Scraped requirements", icon: <Globe className="w-3.5 h-3.5" /> },
-    { id: 3, label: "AI Matching", description: "Skill gap analysis", icon: <Sparkles className="w-3.5 h-3.5" /> },
+    { id: 2, label: "Job", description: "Scraped requirements", icon: <Globe className="w-3.5 h-3.5" /> },
+    { id: 3, label: "AI ", description: "Skill gap analysis", icon: <Sparkles className="w-3.5 h-3.5" /> },
     { id: 4, label: "Automation", description: "Started applying", icon: <Play className="w-3.5 h-3.5" /> },
     { id: 5, label: "Submitted", description: "Application sent", icon: <Send className="w-3.5 h-3.5" /> },
     { id: 6, label: "Completed", description: "Pipeline finished", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
