@@ -1,52 +1,25 @@
-"""
-Maps classified fields
-to candidate values.
-"""
-
-from automation.classifier.field_type import FieldType
-
-
 class FormMapper:
 
     @staticmethod
     def value(
-
         field_type,
-
         context,
-
     ):
-
         resume = context.resume
+        profile = context.profile
+        mapping = {
+            "FIRST_NAME": resume.first_name,
+            "LAST_NAME": resume.last_name,
+            "EMAIL": resume.email,
+            "PHONE": resume.phone,
+            "LINKEDIN": resume.linkedin,
+            "GITHUB": resume.github,
+            "PORTFOLIO": resume.portfolio,
+            "NOTICE_PERIOD": profile.notice_period,
+            "CURRENT_CTC": profile.current_ctc,
+            "EXPECTED_CTC": profile.expected_ctc,
+        }
 
-        if field_type == FieldType.EMAIL:
-
-            return resume.email
-
-        if field_type == FieldType.PHONE:
-
-            return resume.phone
-
-        if field_type == FieldType.FULL_NAME:
-
-            return resume.name
-
-        if field_type == FieldType.FIRST_NAME:
-
-            return resume.name.split()[0]
-
-        if field_type == FieldType.LAST_NAME:
-
-            names = resume.name.split()
-
-            return names[-1]
-
-        if field_type == FieldType.LINKEDIN:
-
-            return resume.linkedin
-
-        if field_type == FieldType.GITHUB:
-
-            return resume.github
-
-        return None
+        return mapping.get(
+            field_type.value,
+        )

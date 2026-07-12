@@ -1,51 +1,51 @@
-"""
-Login Detector.
-"""
-
 from playwright.sync_api import Page
-
-from automation.utils.text_utils import TextUtils
 
 
 class LoginDetector:
 
-    KEYWORDS = [
+    LOGIN_URLS = [
 
-        "sign in",
+        "/login",
 
-        "login",
+        "/signin",
 
-        "log in",
+        "/auth",
 
-        "continue with google",
-
-        "continue with linkedin",
-
-        "email",
-
-        "password",
+        "/oauth",
 
     ]
 
     @classmethod
     def detect(
-
         cls,
-
         page: Page,
-
     ) -> bool:
 
-        body = TextUtils.normalize(
+        url = page.url.lower()
 
-            page.locator("body").inner_text()
+        if any(x in url for x in cls.LOGIN_URLS):
 
+            return True
+
+        password = page.locator(
+            "input[type='password']:visible"
         )
 
-        return any(
-
-            key in body
-
-            for key in cls.KEYWORDS
-
+        if password.count() > 0:
+            return True
+        email = page.locator(
+            "input[type='email']:visible"
         )
+        if email.count() > 0:
+            return True
+        login_buttons = page.locator(
+            """
+            button:has-text("Sign In"),
+            button:has-text("Login"),
+            button:has-text("Log In"),
+            button:has-text("Continue")
+            """
+        )
+        if login_buttons.count() > 0:
+            return True
+        return False

@@ -1,39 +1,60 @@
-"""
-Field Filler.
-"""
-
 from automation.browser.browser_actions import BrowserActions
-from core.logger import app_logger
 
 
 class FieldFiller:
 
     @staticmethod
     def fill(
+        page,
         field,
         value,
     ):
 
-        if value in (
-            None,
-            "",
-        ):
-
+        if value is None:
             return
+
+        locator = page.locator(
+            field.selector
+        )
 
         try:
 
-            BrowserActions.fill(
-                field.locator,
-                value,
-            )
+            if field.tag == "textarea":
 
-            app_logger.success(
-                f"Filled {field.label}"
-            )
+                BrowserActions.fill(
+                    locator,
+                    value,
+                )
+
+            elif field.tag == "select":
+
+                locator.select_option(
+                    label=str(value)
+                )
+
+            elif field.input_type == "checkbox":
+
+                if bool(value):
+                    locator.check()
+
+            elif field.input_type == "radio":
+
+                locator.check()
+
+            elif field.input_type == "file":
+
+                BrowserActions.upload(
+                    locator,
+                    value,
+                )
+
+            else:
+
+                BrowserActions.fill(
+                    locator,
+                    value,
+                )
 
         except Exception:
 
-            app_logger.exception(
-                f"Unable to fill {field.label}"
-            )
+            pass

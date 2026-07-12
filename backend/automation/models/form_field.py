@@ -10,6 +10,7 @@ class FormField:
     name: str
     placeholder: str
     label: str
-    value: str
     required: bool
     visible: bool
+    options: list[str]
+    value: str | None

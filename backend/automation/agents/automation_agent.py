@@ -11,10 +11,12 @@ from automation.actions.apply_action import ApplyAction
 from automation.services.automation_log_service import AutomationLogService
 from automation.engine.form_engine import FormEngine
 from automation.detector.login_detector import LoginDetector
+import time
 from automation.detector.captcha_detector import CaptchaDetector
 from automation.services.network_service import NetworkService
 from models.db.application_entity import ApplicationStatus
 from core.logger import app_logger
+from automation.engine.upload_engine import UploadEngine
 
 
 class AutomationAgent:
@@ -51,12 +53,7 @@ class AutomationAgent:
             application_id,
             "Automation started."
         )
-        AutomationEventService.publish(
-            application_id,
-            step="browser",
-            message="Launching Browser",
-            progress=5,
-        )
+    
 
         application = self.application_repository.get_by_id(
             application_id
@@ -77,7 +74,6 @@ class AutomationAgent:
         page = browser.launch()
 
         try:
-
             self.application_repository.update_status(
                 application_id,
                 ApplicationStatus.PROCEEDED,
@@ -86,17 +82,15 @@ class AutomationAgent:
                 application_id,
                 "Opening job page."
             )
-            AutomationEventService.publish(
-                application_id,
-                step="job",
-                message="Opening Job Page",
-                progress=15,
-            )
             BrowserActions.goto(
                 page,
                 job.application_url,
             )
             ApplyAction.execute(page)
+            UploadEngine.process(
+                page,
+                application.resume_path,
+            )
             ScreenshotService.save(
                 page,
                 application_id,
@@ -106,23 +100,15 @@ class AutomationAgent:
                 application_id,
                 "Job page screenshot captured."
             )
-            AutomationEventService.publish(
-                application_id,
-                step="apply",
-                message="Clicking Apply",
-                progress=30,
-            )
-            while True:
+            MAX_STEPS = 20
+            current_step = 0
+            
+            while current_step < MAX_STEPS:
                 AutomationLogService.log(application_id, "Checking login...")
                 app_logger.info(
                     "Checking login..."
                 )
-                AutomationEventService.publish(
-                    application_id,
-                    step="login",
-                    message="Waiting Login",
-                    progress=40,
-                )
+                current_step += 1
 
                 if not NetworkService.is_online():
 
@@ -131,33 +117,34 @@ class AutomationAgent:
                         "Internet connection lost."
                     )
 
-                # self.application_repository.update_status(
-                #     application_id,
-                #     ApplicationStatus.WAITING_NETWORK,
-                # )
 
-                while not NetworkService.is_online():
-
-                    time.sleep(3)
+                if not NetworkService.is_online():
 
                     AutomationLogService.log(
                         application_id,
-                        "Internet restored."
+                        "Internet connection lost."
                     )
 
-                if LoginDetector.detect(page):
-                    AutomationLogService.log(application_id, "Login required.")
-                    app_logger.info(
-                        "Login detected."
-                    )
-                    AutomationEventService.publish(
+                    while not NetworkService.is_online():
+
+                        time.sleep(3)
+
+                        AutomationLogService.log(
+                            application_id,
+                            "Internet restored."
+                        )
+
+                while LoginDetector.detect(page):
+
+                    AutomationLogService.log(
                         application_id,
-                        step="login",
-                        message="Waiting Login",
-                        progress=40,
+                        "Waiting for user login..."
                     )
-                    # wait user
-                    continue
+                    app_logger.info(
+                        "Waiting for user login..."
+                    )
+                    time.sleep(2)
+                
                 AutomationLogService.log(application_id, "Checking captcha...")
                 app_logger.info(
                     "Checking captcha..."
@@ -178,9 +165,19 @@ class AutomationAgent:
                 app_logger.info(
                     "Navigating..."
                 )
-                finished = NavigationEngine.process(
-                    page,
-                )
+                result = NavigationEngine.process(page)
+                if result == NavigationResult.SUCCESS:
+                    AutomationLogService.log(
+                        application_id,
+                        "Application submitted."
+                    )
+                    break
+                elif result == NavigationResult.NO_ACTION:
+                    raise Exception(
+                        "Automation stuck. No navigation button found."
+                    )
+                else:
+                    continue
                 if finished:
                     AutomationLogService.log(application_id, "Navigation completed.")
                     app_logger.info(
@@ -190,14 +187,14 @@ class AutomationAgent:
                 ScreenshotService.save(
                     page,
                     application_id,
-                    f"00{page}.png",
+                    "001_open_job.png",
                 )
                 app_logger.info(
-                    f"Screenshot captured: 00{page}.png"
+                    f"Screenshot captured: 001_open_job.png"
                 )
                 AutomationLogService.log(
                     application_id,
-                    f"Screenshot captured: 00{page}.png"
+                    f"Screenshot captured: 001_open_job.png"
                 )
             self.application_repository.update_status(
                 application_id,
@@ -222,7 +219,7 @@ class AutomationAgent:
             raise
         finally:
             browser.close()
-            AutomationLogService.log(
+            AutomationLogService.log(   
                 application_id,
                 "Browser closed."
             )
