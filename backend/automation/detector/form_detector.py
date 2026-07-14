@@ -54,3 +54,4 @@ class FormDetector:
                 fields.append(field)
             except Exception:
                 continue
+        return fields

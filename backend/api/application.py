@@ -69,9 +69,16 @@ async def create_application(
             detail="Only PDF resumes are supported.",
         )
 
-    temp = Path(settings.TEMP_DIRECTORY) / f"{uuid.uuid4()}.pdf"
+    storage = Path("storage/resumes")
+
+    storage.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    resume_path = storage / f"{uuid.uuid4()}.pdf"
     try:
-        temp.parent.mkdir(parents=True, exist_ok=True)
+        resume_path.parent.mkdir(parents=True, exist_ok=True)
         content = await resume.read()
 
         # Validate file size (10MB limit)
@@ -81,9 +88,9 @@ async def create_application(
                 detail="Resume size exceeds 10MB.",
             )
 
-        temp.write_bytes(content)
+        resume_path.write_bytes(content)
         result = agent.process(
-            resume_path=temp,
+            resume_path=resume_path,
             job_url=job_url,
         )
         logger.success("Application created.")

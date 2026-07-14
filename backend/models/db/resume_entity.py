@@ -36,6 +36,11 @@ class ResumeEntity(Base):
         nullable=False,
     )
 
+    file_path: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
     name: Mapped[str | None] = mapped_column(Text)
 
     email: Mapped[str | None] = mapped_column(

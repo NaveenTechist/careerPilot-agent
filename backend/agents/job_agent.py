@@ -61,7 +61,7 @@ class JobAgent:
 
         profile = self.parser.parse(job_text)
         profile.application_url = url
-        self.repository.save(profile)
+        self.repository.save(profile, str(pdf_path)) 
         app_logger.success("Job processing completed.")
 
         return profile

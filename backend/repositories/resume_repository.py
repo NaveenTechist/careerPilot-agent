@@ -13,10 +13,8 @@ Responsibilities
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
 from database.database import SessionLocal
 from models.db.resume_entity import ResumeEntity
-
 from models.resume_profile import ResumeProfile
 from models.db.resume_entity import ResumeEntity
 import uuid
@@ -27,6 +25,7 @@ class ResumeRepository:
     def save(
         self,
         profile: ResumeProfile,
+        pdf_path: str,
         file_hash: str | None = None,
         content_hash: str | None = None,
     ) -> ResumeEntity:
@@ -50,6 +49,7 @@ class ResumeRepository:
                 resume_json=profile.model_dump(),
                 file_hash=file_hash,
                 content_hash=content_hash,
+                file_path=str(pdf_path),
             )
 
             db.add(entity)

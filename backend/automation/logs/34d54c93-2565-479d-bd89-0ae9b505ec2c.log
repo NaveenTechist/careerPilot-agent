@@ -1,4 +1,9 @@
-[2026-07-12 19:38:05] Automation started.
-[2026-07-12 19:38:15] Opening job page.
-[2026-07-12 19:38:27] Automation failed: 'ApplicationEntity' object has no attribute 'resume_path'
-[2026-07-12 19:38:30] Browser closed.
+[2026-07-14 18:57:57] Automation started.
+[2026-07-14 18:57:59] Opening job page.
+[2026-07-14 18:58:12] Job page screenshot captured.
+[2026-07-14 18:58:12] Checking login...
+[2026-07-14 18:58:13] Checking captcha...
+[2026-07-14 18:58:13] Scanning form...
+[2026-07-14 18:58:14] Navigating...
+[2026-07-14 18:58:14] Automation failed: 'tuple' object has no attribute 'lower'
+[2026-07-14 18:58:18] Browser closed.

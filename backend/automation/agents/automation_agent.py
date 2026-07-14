@@ -17,7 +17,8 @@ from automation.services.network_service import NetworkService
 from models.db.application_entity import ApplicationStatus
 from core.logger import app_logger
 from automation.engine.upload_engine import UploadEngine
-
+from automation.engine.navigation_engine import NavigationEngine
+from automation.navigation.navigation_result import NavigationResult
 
 class AutomationAgent:
 
@@ -68,9 +69,7 @@ class AutomationAgent:
 
         if job is None:
             raise Exception("Job not found.")
-
         browser = BrowserManager()
-
         page = browser.launch()
 
         try:
@@ -87,9 +86,14 @@ class AutomationAgent:
                 job.application_url,
             )
             ApplyAction.execute(page)
-            UploadEngine.process(
-                page,
-                application.resume_path,
+            resume = self.resume_repository.get_by_id(
+                application.resume_id,
+            )
+            if resume:
+                UploadEngine.process(
+                    page,
+                resume.file_path,
+
             )
             ScreenshotService.save(
                 page,
@@ -173,9 +177,12 @@ class AutomationAgent:
                     )
                     break
                 elif result == NavigationResult.NO_ACTION:
-                    raise Exception(
-                        "Automation stuck. No navigation button found."
+                    AutomationLogService.log(
+                        application_id,
+                        "No navigation button detected."
                     )
+                    page.wait_for_timeout(3000)
+                    continue
                 else:
                     continue
                 if finished:
