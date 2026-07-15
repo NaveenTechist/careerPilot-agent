@@ -27,6 +27,9 @@ class NavigationEngine:
         page,
     ):
 
+        if SuccessDetector.detect(page):
+            return NavigationResult.SUCCESS
+
         buttons = page.locator(
             "button,input[type='submit'],a[role='button']"
         )
@@ -39,9 +42,21 @@ class NavigationEngine:
                 label = button.inner_text().strip()
             except:
                 continue
-            for keyword in cls.BUTTONS:
+            for item in cls.BUTTONS:
+                if isinstance(item, tuple):
+                    keyword, result = item
+                else:
+                    keyword = item
+                    # fallback mapping
+                    if "submit" in keyword.lower():
+                        result = NavigationResult.SUBMIT
+                    elif "review" in keyword.lower():
+                        result = NavigationResult.REVIEW
+                    else:
+                        result = NavigationResult.NEXT
+                
                 if keyword.lower() in label.lower():
                     BrowserActions.click(button)
                     BrowserActions.wait(page)
-                    return NavigationResult.NEXT
-        return NavigationResult.NOT_FOUND
+                    return result
+        return NavigationResult.NO_ACTION

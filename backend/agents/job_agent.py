@@ -58,10 +58,9 @@ class JobAgent:
             job_text,
             encoding="utf-8",
         )
-
         profile = self.parser.parse(job_text)
         profile.application_url = url
-        self.repository.save(profile, str(pdf_path)) 
+        self.repository.save(profile)
         app_logger.success("Job processing completed.")
 
         return profile

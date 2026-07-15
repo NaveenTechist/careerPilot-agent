@@ -25,7 +25,7 @@ class ResumeRepository:
     def save(
         self,
         profile: ResumeProfile,
-        pdf_path: str,
+        pdf_path: str | None = None,
         file_hash: str | None = None,
         content_hash: str | None = None,
     ) -> ResumeEntity:
@@ -49,7 +49,7 @@ class ResumeRepository:
                 resume_json=profile.model_dump(),
                 file_hash=file_hash,
                 content_hash=content_hash,
-                file_path=str(pdf_path),
+                file_path=str(pdf_path) if pdf_path else "",
             )
 
             db.add(entity)

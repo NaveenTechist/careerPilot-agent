@@ -45,8 +45,17 @@ class ResumeAgent:
         text, pages = self.pdf_service.extract_text(pdf_path)
 
         profile = self.parser_service.parse(text)
-        self.resume_repository.save(profile)
+
+        # Copy the PDF to permanent storage
+        import shutil
+        import uuid
+        permanent_dir = Path("storage/resumes")
+        permanent_dir.mkdir(parents=True, exist_ok=True)
+        permanent_path = permanent_dir / f"{uuid.uuid4()}.pdf"
+        shutil.copy2(pdf_path, permanent_path)
+
+        entity = self.resume_repository.save(profile=profile, pdf_path=str(permanent_path))
 
         app_logger.success("Resume processed successfully. 🔥🔥🔥")
 
-        return profile
+        return entity

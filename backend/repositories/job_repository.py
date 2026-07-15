@@ -11,16 +11,17 @@ from models.job_profile import JobProfile
 from models.db.job_entity import JobEntity
 from core.logger import app_logger
 import uuid
+from services.hashing_service import HashingService
 
 
 class JobRepository:
     def save(
         self,
         profile: JobProfile,
-        url_hash: str = None,
+        url_hash: str | None = None,
     ) -> JobEntity:
+
         if url_hash is None:
-            from services.hashing_service import HashingService
             url_hash = HashingService.text_sha256(profile.application_url or "")
         app_logger.info("Saving job profile.")
         db: Session = SessionLocal()

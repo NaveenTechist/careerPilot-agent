@@ -75,11 +75,16 @@ async def create_application(
         parents=True,
         exist_ok=True,
     )
-
+    temp = None
     resume_path = storage / f"{uuid.uuid4()}.pdf"
     try:
         resume_path.parent.mkdir(parents=True, exist_ok=True)
         content = await resume.read()
+
+        temp = (
+            Path(settings.TEMP_DIRECTORY)
+            / f"{uuid.uuid4()}.pdf"
+        )
 
         # Validate file size (10MB limit)
         if len(content) > settings.MAX_FILE_SIZE:
@@ -87,12 +92,11 @@ async def create_application(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail="Resume size exceeds 10MB.",
             )
-
-        resume_path.write_bytes(content)
+        temp.write_bytes(content)
         result = agent.process(
-            resume_path=resume_path,
+            resume_path=temp,
             job_url=job_url,
-        )
+        )   
         logger.success("Application created.")
         return result
     except Exception as e:
@@ -102,7 +106,7 @@ async def create_application(
             detail=str(e)
         )
     finally:
-        if temp.exists():
+        if temp and  temp.exists():
             temp.unlink()
         await resume.close()
         logger.info(

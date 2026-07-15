@@ -19,6 +19,9 @@ from core.logger import app_logger
 from automation.engine.upload_engine import UploadEngine
 from automation.engine.navigation_engine import NavigationEngine
 from automation.navigation.navigation_result import NavigationResult
+from automation.parser.field_parser import FieldParser
+# from automation.matcher.answer_matcher import AnswerMatcher
+from automation.filler.field_filler import FieldFiller
 
 class AutomationAgent:
 
@@ -158,13 +161,20 @@ class AutomationAgent:
                     app_logger.info(
                         "Captcha detected."
                     )
-                    # wait user
+                    time.sleep(2)
                     continue
                 AutomationLogService.log(application_id, "Scanning form...")
-                FormEngine.process(
-                    page,
-                    application,
-                )
+                fields = FieldParser.parse(page)
+
+                for field in fields:
+                    answer = AnswerMatcher.match(
+                        field,
+                        application,
+                    )
+                    FieldFiller.fill(
+                        field,
+                        answer,
+                    )
                 AutomationLogService.log(application_id, "Navigating...")
                 app_logger.info(
                     "Navigating..."
