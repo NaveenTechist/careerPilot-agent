@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 class NavigationResult(str, Enum):
 
     NEXT = "NEXT"

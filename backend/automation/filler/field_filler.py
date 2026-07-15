@@ -1,11 +1,18 @@
+"""
+Field Filler.
+
+Responsible for filling any supported form field.
+"""
+
 from automation.browser.browser_actions import BrowserActions
+from automation.models.field_type import FieldType
+from core.logger import app_logger
 
 
 class FieldFiller:
 
     @staticmethod
     def fill(
-        page,
         field,
         value,
     ):
@@ -13,48 +20,86 @@ class FieldFiller:
         if value is None:
             return
 
-        locator = page.locator(
-            field.selector
-        )
+        locator = field.locator
 
         try:
 
-            if field.tag == "textarea":
+            match field.field_type:
 
-                BrowserActions.fill(
-                    locator,
-                    value,
-                )
+                case FieldType.TEXT:
 
-            elif field.tag == "select":
+                    BrowserActions.fill(
+                        locator,
+                        str(value),
+                    )
 
-                locator.select_option(
-                    label=str(value)
-                )
+                case FieldType.EMAIL:
 
-            elif field.input_type == "checkbox":
+                    BrowserActions.fill(
+                        locator,
+                        str(value),
+                    )
 
-                if bool(value):
+                case FieldType.PHONE:
+
+                    BrowserActions.fill(
+                        locator,
+                        str(value),
+                    )
+
+                case FieldType.NUMBER:
+
+                    BrowserActions.fill(
+                        locator,
+                        str(value),
+                    )
+
+                case FieldType.TEXTAREA:
+
+                    BrowserActions.fill(
+                        locator,
+                        str(value),
+                    )
+
+                case FieldType.SELECT:
+
+                    locator.select_option(
+                        label=str(value),
+                    )
+
+                case FieldType.CHECKBOX:
+
+                    if bool(value):
+
+                        locator.check()
+
+                case FieldType.RADIO:
+
                     locator.check()
 
-            elif field.input_type == "radio":
+                case FieldType.FILE:
 
-                locator.check()
+                    BrowserActions.upload(
+                        locator,
+                        str(value),
+                    )
 
-            elif field.input_type == "file":
+                case FieldType.DATE:
 
-                BrowserActions.upload(
-                    locator,
-                    value,
-                )
+                    BrowserActions.fill(
+                        locator,
+                        str(value),
+                    )
 
-            else:
+                case _:
 
-                BrowserActions.fill(
-                    locator,
-                    value,
-                )
+                    BrowserActions.fill(
+                        locator,
+                        str(value),
+                    )
 
-        except Exception:
+        except Exception as e:
 
-            pass
+            app_logger.exception(
+                f"Failed to fill '{field.label}': {e}"
+            )

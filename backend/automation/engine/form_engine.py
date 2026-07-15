@@ -3,6 +3,7 @@ from automation.classifier.field_classifier import FieldClassifier
 from automation.mapper.form_mapper import FormMapper
 from automation.filler.field_filler import FieldFiller
 from automation.parser.field_parser import FieldParser
+from automation.matcher.answer_matcher import AnswerMatcher
 
 
 class FormEngine:
@@ -10,23 +11,17 @@ class FormEngine:
     @staticmethod
     def process(
         page,
-        context,
+        resume,
     ):
-
         fields = FieldParser.parse(page)
         for field in fields:
-            print(
-                field.label,
-                field.field_type,
+            answer = AnswerMatcher.match(
+                field=field,
+                resume=resume,
             )
-
-            value = FormMapper.value(
-                field_type,
-                context,
-            )
-
+            if answer is None:
+                continue
             FieldFiller.fill(
-                page,
                 field,
-                value,
+                answer,
             )

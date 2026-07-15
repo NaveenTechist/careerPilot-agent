@@ -20,7 +20,7 @@ from automation.engine.upload_engine import UploadEngine
 from automation.engine.navigation_engine import NavigationEngine
 from automation.navigation.navigation_result import NavigationResult
 from automation.parser.field_parser import FieldParser
-# from automation.matcher.answer_matcher import AnswerMatcher
+from automation.matcher.answer_matcher import AnswerMatcher
 from automation.filler.field_filler import FieldFiller
 
 class AutomationAgent:
@@ -62,6 +62,15 @@ class AutomationAgent:
         application = self.application_repository.get_by_id(
             application_id
         )
+
+        resume = self.resume_repository.get_by_id(
+            application.resume_id,
+        )
+
+        if resume is None:
+            raise Exception(
+                "Resume not found."
+            )
 
         if application is None:
             raise Exception("Application not found.")
@@ -169,7 +178,8 @@ class AutomationAgent:
                 for field in fields:
                     answer = AnswerMatcher.match(
                         field,
-                        application,
+                        resume.resume_json,
+                        resume.file_path,
                     )
                     FieldFiller.fill(
                         field,
@@ -180,6 +190,20 @@ class AutomationAgent:
                     "Navigating..."
                 )
                 result = NavigationEngine.process(page)
+                match result:
+                    case NavigationResult.NEXT:
+                        continue
+                    case NavigationResult.REVIEW:
+                        continue
+                    case NavigationResult.SUBMIT:
+                        continue
+                    case NavigationResult.SUCCESS:
+                        break
+                    case NavigationResult.WAITING_USER:
+                        continue
+                    case NavigationResult.NO_ACTION:
+                        raise Exception("Automation stuck. No navigation button found.")
+                
                 if result == NavigationResult.SUCCESS:
                     AutomationLogService.log(
                         application_id,

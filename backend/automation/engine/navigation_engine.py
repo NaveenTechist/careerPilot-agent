@@ -1,6 +1,6 @@
-from automation.navigation.navigation_result import NavigationResult
 from automation.detector.success_detector import SuccessDetector
 from automation.browser.browser_actions import BrowserActions
+from automation.navigation.navigation_result import NavigationResult
 
 
 class NavigationEngine:
