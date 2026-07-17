@@ -66,15 +66,24 @@ select
                     field_type = FieldType.DATE
                 else:
                     field_type = FieldType.TEXT
+                label_text = LabelParser.parse(locator)
+                is_required = locator.get_attribute("required") is not None
+                if not is_required:
+                    aria_req = locator.get_attribute("aria-required")
+                    if aria_req and aria_req.lower() == "true":
+                        is_required = True
+                if not is_required and "*" in label_text:
+                    is_required = True
+
                 fields.append(
                     Field(
                         locator=locator,
                         tag=tag,
                         field_type=field_type,
-                        label=LabelParser.parse(locator),
+                        label=label_text,
                         name=locator.get_attribute("name") or "",
                         placeholder=locator.get_attribute("placeholder") or "",
-                        required=locator.get_attribute("required") is not None,
+                        required=is_required,
                     )
                 )
             except Exception:

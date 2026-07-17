@@ -40,6 +40,7 @@ from automation.engine.navigation_engine import NavigationEngine
 from automation.navigation.navigation_result import NavigationResult
 from models.db.application_entity import ApplicationStatus
 from core.logger import app_logger
+from automation.models.field_type import FieldType
 
 
 class AutomationAgent:
@@ -180,6 +181,7 @@ class AutomationAgent:
         loading_count = 0
         unknown_count = 0
         screenshot_counter = 2  # 001 already taken
+        resume_uploaded = False
 
         while step < self.MAX_STEPS:
             step += 1
@@ -305,11 +307,12 @@ class AutomationAgent:
                 # FORM
                 # ======================================
                 case PageType.FORM:
-                    self._handle_form(
+                    resume_uploaded = self._handle_form(
                         page,
                         application_id,
                         resume,
                         screenshot_counter,
+                        resume_uploaded,
                     )
                     screenshot_counter += 1
                     loading_count = 0
@@ -476,16 +479,24 @@ class AutomationAgent:
 
     # --------------------------------------------------
 
+    # Maximum retries for filling remaining fields before
+    # giving up on a single form page.
+    MAX_FORM_RETRIES = 3
+
     def _handle_form(
         self,
         page,
         application_id: str,
         resume,
         screenshot_counter: int,
-    ):
+        resume_uploaded: bool = False,
+    ) -> bool:
         """
         Parse form fields, match to resume data,
         fill fields, upload resume, and navigate.
+
+        Returns the updated resume_uploaded flag so the
+        state machine can track it across iterations.
         """
         AutomationLogService.log(
             application_id,
@@ -493,76 +504,112 @@ class AutomationAgent:
         )
 
         # ------------------------------------------
-        # Upload resume if file inputs exist
+        # Upload resume ONCE per application
         # ------------------------------------------
-        if resume and resume.file_path:
+        if not resume_uploaded and resume and resume.file_path:
             uploaded = UploadEngine.process(page, resume.file_path)
             if uploaded:
+                resume_uploaded = True
                 AutomationLogService.log(
                     application_id,
                     "Resume uploaded."
                 )
 
         # ------------------------------------------
-        # Parse visible form fields
+        # Fill → Validate → Retry loop
         # ------------------------------------------
-        fields = FieldParser.parse(page)
-        AutomationLogService.log(
-            application_id,
-            f"Found {len(fields)} form fields."
-        )
+        for retry in range(self.MAX_FORM_RETRIES):
+            if retry > 0:
+                AutomationLogService.log(
+                    application_id,
+                    f"Retrying form fill (attempt {retry + 1}/{self.MAX_FORM_RETRIES})..."
+                )
 
-        # ------------------------------------------
-        # Match and fill each field
-        # ------------------------------------------
-        filled_count = 0
-        skipped_count = 0
-
-        for field in fields:
-            answer = AnswerMatcher.match(
-                field,
-                resume.resume_json,
-                resume.file_path,
-            )
-
-            if answer is not None:
-                FieldFiller.fill(field, answer)
-                filled_count += 1
-            else:
-                skipped_count += 1
-
-        AutomationLogService.log(
-            application_id,
-            f"Fields filled: {filled_count}, Skipped: {skipped_count}"
-        )
-
-        # ------------------------------------------
-        # Screenshot before navigation
-        # ------------------------------------------
-        ScreenshotService.save(
-            page,
-            application_id,
-            f"{screenshot_counter:03d}_form_filled.png",
-        )
-
-        # ------------------------------------------
-        # Navigate to next page
-        # ------------------------------------------
-        AutomationLogService.log(application_id, "Navigating to next step...")
-
-        result = NavigationEngine.process(page, application_id)
-
-        AutomationLogService.log(
-            application_id,
-            f"Navigation result: {result.value}"
-        )
-
-        if result == NavigationResult.NO_ACTION:
+            # ------------------------------------------
+            # Parse visible form fields
+            # ------------------------------------------
+            fields = FieldParser.parse(page)
             AutomationLogService.log(
                 application_id,
-                "No navigation button found. Waiting..."
+                f"Found {len(fields)} form fields."
             )
-            page.wait_for_timeout(3000)
+
+            # ------------------------------------------
+            # Match and fill each field
+            # ------------------------------------------
+            filled_count = 0
+            skipped_count = 0
+
+            for field in fields:
+                answer = AnswerMatcher.match(
+                    field,
+                    resume.resume_json,
+                    resume.file_path,
+                )
+
+                if answer is not None:
+                    FieldFiller.fill(field, answer)
+                    filled_count += 1
+                    AutomationLogService.log(
+                        application_id,
+                        f"Filled field '{field.label}' (name: '{field.name}', type: '{field.field_type.value}') with: {answer}"
+                    )
+                else:
+                    skipped_count += 1
+                    reason = "No matching value found in resume profile"
+                    if not field.label and not field.placeholder and not field.name:
+                        reason = "Field has no visible label, placeholder, or name attribute"
+                    elif field.field_type == FieldType.UNKNOWN:
+                        reason = "Field type is unknown/unsupported"
+                    AutomationLogService.log(
+                        application_id,
+                        f"Skipped field '{field.label}' (name: '{field.name}', type: '{field.field_type.value}'). Reason: {reason}"
+                    )
+
+            AutomationLogService.log(
+                application_id,
+                f"Fields filled: {filled_count}, Skipped: {skipped_count}"
+            )
+
+            # ------------------------------------------
+            # Screenshot before navigation
+            # ------------------------------------------
+            ScreenshotService.save(
+                page,
+                application_id,
+                f"{screenshot_counter:03d}_form_filled.png",
+            )
+
+            # ------------------------------------------
+            # Navigate to next page
+            # ------------------------------------------
+            AutomationLogService.log(application_id, "Navigating to next step...")
+
+            result = NavigationEngine.process(page, application_id)
+
+            AutomationLogService.log(
+                application_id,
+                f"Navigation result: {result.value}"
+            )
+
+            if result != NavigationResult.NO_ACTION:
+                # Navigation succeeded (NEXT, SUBMIT, REVIEW, etc.)
+                return resume_uploaded
+
+            # Navigation was blocked — required fields still incomplete.
+            # Wait briefly then retry filling the remaining fields.
+            AutomationLogService.log(
+                application_id,
+                "Navigation blocked: required fields still incomplete. Will retry filling..."
+            )
+            page.wait_for_timeout(2000)
+
+        # Exhausted retries — return to state machine for re-detection
+        AutomationLogService.log(
+            application_id,
+            f"Form fill retries exhausted ({self.MAX_FORM_RETRIES}). Returning to state machine."
+        )
+        return resume_uploaded
 
     # --------------------------------------------------
 
