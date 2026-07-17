@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 class JobProfile(BaseModel):
     company: str | None = None
-    job_title: str
+    job_title: str | None = None
     location: str | None = None
     employment_type: str | None = None
     experience: str | None = None

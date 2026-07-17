@@ -25,7 +25,13 @@ class NavigationEngine:
     def process(
         cls,
         page,
+        application_id: str = None,
     ):
+
+        from automation.detector.modal_detector import ModalDetector
+        modal_status = ModalDetector.detect_and_handle(page, application_id)
+        if modal_status == "WAITING_USER":
+            return NavigationResult.WAITING_USER
 
         if SuccessDetector.detect(page):
             return NavigationResult.SUCCESS

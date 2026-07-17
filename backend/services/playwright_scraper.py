@@ -91,7 +91,7 @@ class PlaywrightScraper:
                             raise
                     page.wait_for_timeout(2000)
                     self._accept_cookies(page)
-                    page.wait_for_load_state("networkidle")
+                    page.wait_for_load_state("domcontentloaded")
                     page_text = self._extract_text(page)
 
                     if len(page_text) < settings.MIN_JOB_TEXT_LENGTH:

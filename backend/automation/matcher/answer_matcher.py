@@ -30,44 +30,44 @@ class AnswerMatcher:
         # -----------------------------
 
         if "first" in label and "name" in label:
-            return resume.get("first_name")
+            return resume_json.get("first_name")
 
         if "last" in label and "name" in label:
-            return resume.get("last_name")
+            return resume_json.get("last_name")
 
         if label == "name":
-            return resume.get("name")
+            return resume_json.get("name")
 
         # -----------------------------
         # Contact
         # -----------------------------
         if "email" in label:
-            return resume.get("email")
+            return resume_json.get("email")
         if "phone" in label:
-            return resume.get("phone")
+            return resume_json.get("phone")
         if "mobile" in label:
-            return resume.get("phone")
+            return resume_json.get("phone")
         # -----------------------------
         # Location
         # -----------------------------
         if "city" in label:
-            return resume.get("city")
+            return resume_json.get("city")
         if "country" in label:
-            return resume.get("country")
+            return resume_json.get("country")
         if "state" in label:
-            return resume.get("state")
+            return resume_json.get("state")
         # -----------------------------
         # Links
         # -----------------------------
         if "linkedin" in label:
-            return resume.get("linkedin")
+            return resume_json.get("linkedin")
         if "github" in label:
-            return resume.get("github")
+            return resume_json.get("github")
         if "portfolio" in label:
-            return resume.get("portfolio")
+            return resume_json.get("portfolio")
         # -----------------------------
         # Resume
         # -----------------------------
         if field.field_type == FieldType.FILE:
-            return resume.file_path
+            return resume_path
         return None

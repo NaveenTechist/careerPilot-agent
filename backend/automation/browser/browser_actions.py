@@ -22,7 +22,7 @@ class BrowserActions:
 
         page.goto(
             url,
-            wait_until="networkidle",
+            wait_until="domcontentloaded",
             timeout=60000,
         )
 
@@ -75,5 +75,5 @@ class BrowserActions:
     ):
 
         page.wait_for_load_state(
-            "networkidle"
+            "domcontentloaded"
         )

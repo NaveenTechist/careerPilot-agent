@@ -7,7 +7,6 @@ from automation.matcher.answer_matcher import AnswerMatcher
 
 
 class FormEngine:
-
     @staticmethod
     def process(
         page,

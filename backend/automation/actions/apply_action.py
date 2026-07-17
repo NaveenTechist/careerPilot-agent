@@ -13,11 +13,15 @@ class ApplyAction:
     @staticmethod
     def execute(
         page,
+        application_id: str = None,
     ) -> bool:
 
         app_logger.info(
             "Searching Apply button."
         )
+
+        from automation.detector.modal_detector import ModalDetector
+        ModalDetector.detect_and_handle(page, application_id)
 
         button = ApplyDetector.detect(
             page
